@@ -1,0 +1,154 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      Int                @id @default(autoincrement())
+  username                String             @unique
+  password_hash           String
+  email                   String?            @unique
+  reality_check_frequency String             @default("daily")
+  lucid_dream_goal        String             @default("Better dream recall")
+  profile_picture_url     String?            @default("/static/images/default_profile_pic.png")
+  bio                     String?
+
+  dreams                  DreamEntry[]
+  ai_prompts              AIPrompt[]
+  audio_prompts           AudioPrompt[]
+  sleep_plans             SleepPlan[]
+  lucid_settings          LucidTrainerSetting?
+  spirit_guide_chats      SpiritGuideChat[]
+  dream_art_creations     DreamArt[]
+  sleep_recordings        SleepRecording[]
+
+  sent_friend_requests    FriendRequest[]    @relation("SentFriendRequests")
+  received_friend_requests FriendRequest[]   @relation("ReceivedFriendRequests")
+
+  followedBy              User[]             @relation("UserFollows")
+  following               User[]             @relation("UserFollows")
+}
+
+model DreamEntry {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  timestamp   DateTime @default(now())
+  content     String   @db.Text
+  ai_analysis String?  @db.Text
+  is_lucid    Boolean  @default(false)
+  emotion     String?
+  visibility  String   @default("private")
+
+  user        User     @relation(fields: [user_id], references: [id])
+  tags        Tag[]    @relation("DreamEntryTags")
+}
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  dream_entries DreamEntry[] @relation("DreamEntryTags")
+}
+
+model AIPrompt {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  timestamp   DateTime @default(now())
+  user_input  String   @db.Text
+  ai_response String   @db.Text
+
+  user        User     @relation(fields: [user_id], references: [id])
+  audio_file  AudioPrompt?
+}
+
+model AudioPrompt {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
+  original_text String   @db.Text
+  file_path     String
+  description   String?  @db.Text
+  timestamp     DateTime @default(now())
+  ai_prompt_id  Int?     @unique
+
+  user      User     @relation(fields: [user_id], references: [id])
+  ai_prompt AIPrompt? @relation(fields: [ai_prompt_id], references: [id])
+}
+
+model SleepPlan {
+  id                   Int      @id @default(autoincrement())
+  user_id              Int
+  plan_date            DateTime @db.Date
+  goal                 String   @db.Text
+  bedtime_ritual       String?  @db.Text
+  sleep_time           DateTime? @db.Time
+  wake_time            DateTime? @db.Time
+  ai_ritual_suggestion String?  @db.Text
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, plan_date])
+}
+
+model LucidTrainerSetting {
+  id                 Int      @id @default(autoincrement())
+  user_id            Int      @unique
+  reality_check_time DateTime? @db.Time
+  rc_frequency       String   @default("off")
+  rc_method          String   @default("hand-check")
+  last_rc_reminder   DateTime? @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+}
+
+model SpiritGuideChat {
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  user_message String   @db.Text
+  ai_response  String   @db.Text
+  timestamp    DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+}
+
+model DreamArt {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  prompt      String   @db.Text
+  image_url   String
+  timestamp   DateTime @default(now())
+  description String?  @db.Text
+
+  user User @relation(fields: [user_id], references: [id])
+}
+
+model SleepRecording {
+  id               Int      @id @default(autoincrement())
+  user_id          Int
+  start_time       DateTime @default(now())
+  end_time         DateTime?
+  file_path        String
+  duration_seconds Int?
+  notes            String?  @db.Text
+
+  user User @relation(fields: [user_id], references: [id])
+}
+
+model FriendRequest {
+  id          Int      @id @default(autoincrement())
+  sender_id   Int
+  receiver_id Int
+  timestamp   DateTime @default(now())
+  status      String   @default("pending")
+
+  sender   User @relation("SentFriendRequests", fields: [sender_id], references: [id])
+  receiver User @relation("ReceivedFriendRequests", fields: [receiver_id], references: [id])
+
+  @@unique([sender_id, receiver_id])
+}
