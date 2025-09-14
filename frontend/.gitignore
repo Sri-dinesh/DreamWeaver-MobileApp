@@ -32,6 +32,10 @@ yarn-error.*
 
 # local env files
 .env*.local
+
+.cursor
+.vscode
+.expo
 .env
 
 # typescript
@@ -42,8 +46,3 @@ app-example
 # generated native folders
 /ios
 /android
-
-
-
-.vscode
-.cursor
