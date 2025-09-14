@@ -1,6 +1,6 @@
 -- CreateTable
 CREATE TABLE "public"."User" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "password_hash" TEXT NOT NULL,
     "email" TEXT,
@@ -15,7 +15,7 @@ CREATE TABLE "public"."User" (
 -- CreateTable
 CREATE TABLE "public"."DreamEntry" (
     "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "user_id" TEXT NOT NULL,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "content" TEXT NOT NULL,
     "ai_analysis" TEXT,
@@ -37,7 +37,7 @@ CREATE TABLE "public"."Tag" (
 -- CreateTable
 CREATE TABLE "public"."AIPrompt" (
     "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "user_id" TEXT NOT NULL,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "user_input" TEXT NOT NULL,
     "ai_response" TEXT NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE "public"."AIPrompt" (
 -- CreateTable
 CREATE TABLE "public"."AudioPrompt" (
     "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "user_id" TEXT NOT NULL,
     "original_text" TEXT NOT NULL,
     "file_path" TEXT NOT NULL,
     "description" TEXT,
@@ -61,7 +61,7 @@ CREATE TABLE "public"."AudioPrompt" (
 -- CreateTable
 CREATE TABLE "public"."SleepPlan" (
     "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "user_id" TEXT NOT NULL,
     "plan_date" DATE NOT NULL,
     "goal" TEXT NOT NULL,
     "bedtime_ritual" TEXT,
@@ -75,7 +75,7 @@ CREATE TABLE "public"."SleepPlan" (
 -- CreateTable
 CREATE TABLE "public"."LucidTrainerSetting" (
     "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "user_id" TEXT NOT NULL,
     "reality_check_time" TIME,
     "rc_frequency" TEXT NOT NULL DEFAULT 'off',
     "rc_method" TEXT NOT NULL DEFAULT 'hand-check',
@@ -87,7 +87,7 @@ CREATE TABLE "public"."LucidTrainerSetting" (
 -- CreateTable
 CREATE TABLE "public"."SpiritGuideChat" (
     "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "user_id" TEXT NOT NULL,
     "user_message" TEXT NOT NULL,
     "ai_response" TEXT NOT NULL,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -98,7 +98,7 @@ CREATE TABLE "public"."SpiritGuideChat" (
 -- CreateTable
 CREATE TABLE "public"."DreamArt" (
     "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "user_id" TEXT NOT NULL,
     "prompt" TEXT NOT NULL,
     "image_url" TEXT NOT NULL,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -110,7 +110,7 @@ CREATE TABLE "public"."DreamArt" (
 -- CreateTable
 CREATE TABLE "public"."SleepRecording" (
     "id" SERIAL NOT NULL,
-    "user_id" INTEGER NOT NULL,
+    "user_id" TEXT NOT NULL,
     "start_time" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "end_time" TIMESTAMP(3),
     "file_path" TEXT NOT NULL,
@@ -123,8 +123,8 @@ CREATE TABLE "public"."SleepRecording" (
 -- CreateTable
 CREATE TABLE "public"."FriendRequest" (
     "id" SERIAL NOT NULL,
-    "sender_id" INTEGER NOT NULL,
-    "receiver_id" INTEGER NOT NULL,
+    "sender_id" TEXT NOT NULL,
+    "receiver_id" TEXT NOT NULL,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status" TEXT NOT NULL DEFAULT 'pending',
 
@@ -133,8 +133,8 @@ CREATE TABLE "public"."FriendRequest" (
 
 -- CreateTable
 CREATE TABLE "public"."_UserFollows" (
-    "A" INTEGER NOT NULL,
-    "B" INTEGER NOT NULL,
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL,
 
     CONSTRAINT "_UserFollows_AB_pkey" PRIMARY KEY ("A","B")
 );

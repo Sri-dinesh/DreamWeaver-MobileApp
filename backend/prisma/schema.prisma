@@ -11,7 +11,7 @@ datasource db {
 }
 
 model User {
-  id                      Int                @id @default(autoincrement())
+  id                      String             @id @default(uuid())
   username                String             @unique
   password_hash           String
   email                   String?            @unique
@@ -38,7 +38,7 @@ model User {
 
 model DreamEntry {
   id          Int      @id @default(autoincrement())
-  user_id     Int
+  user_id     String
   timestamp   DateTime @default(now())
   content     String   @db.Text
   ai_analysis String?  @db.Text
@@ -59,7 +59,7 @@ model Tag {
 
 model AIPrompt {
   id          Int      @id @default(autoincrement())
-  user_id     Int
+  user_id     String
   timestamp   DateTime @default(now())
   user_input  String   @db.Text
   ai_response String   @db.Text
@@ -70,7 +70,7 @@ model AIPrompt {
 
 model AudioPrompt {
   id            Int      @id @default(autoincrement())
-  user_id       Int
+  user_id       String
   original_text String   @db.Text
   file_path     String
   description   String?  @db.Text
@@ -83,7 +83,7 @@ model AudioPrompt {
 
 model SleepPlan {
   id                   Int      @id @default(autoincrement())
-  user_id              Int
+  user_id              String
   plan_date            DateTime @db.Date
   goal                 String   @db.Text
   bedtime_ritual       String?  @db.Text
@@ -98,7 +98,7 @@ model SleepPlan {
 
 model LucidTrainerSetting {
   id                 Int      @id @default(autoincrement())
-  user_id            Int      @unique
+  user_id            String   @unique
   reality_check_time DateTime? @db.Time
   rc_frequency       String   @default("off")
   rc_method          String   @default("hand-check")
@@ -109,7 +109,7 @@ model LucidTrainerSetting {
 
 model SpiritGuideChat {
   id           Int      @id @default(autoincrement())
-  user_id      Int
+  user_id      String
   user_message String   @db.Text
   ai_response  String   @db.Text
   timestamp    DateTime @default(now())
@@ -119,7 +119,7 @@ model SpiritGuideChat {
 
 model DreamArt {
   id          Int      @id @default(autoincrement())
-  user_id     Int
+  user_id     String
   prompt      String   @db.Text
   image_url   String
   timestamp   DateTime @default(now())
@@ -130,7 +130,7 @@ model DreamArt {
 
 model SleepRecording {
   id               Int      @id @default(autoincrement())
-  user_id          Int
+  user_id          String
   start_time       DateTime @default(now())
   end_time         DateTime?
   file_path        String
@@ -142,8 +142,8 @@ model SleepRecording {
 
 model FriendRequest {
   id          Int      @id @default(autoincrement())
-  sender_id   Int
-  receiver_id Int
+  sender_id   String
+  receiver_id String
   timestamp   DateTime @default(now())
   status      String   @default("pending")
 
