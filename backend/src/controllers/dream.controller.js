@@ -1,5 +1,4 @@
-
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 // Helper function to handle tags
@@ -27,11 +26,11 @@ exports.getDreams = async (req, res) => {
     const dreams = await prisma.dreamEntry.findMany({
       where: { user_id: req.userId },
       include: { tags: true },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { timestamp: "desc" },
     });
     res.status(200).json(dreams);
   } catch (error) {
-    res.status(500).json({ message: 'Something went wrong', error });
+    res.status(500).json({ message: "Something went wrong", error });
   }
 };
 
@@ -47,16 +46,16 @@ exports.getDreamById = async (req, res) => {
     });
 
     if (!dream) {
-      return res.status(404).json({ message: 'Dream not found' });
+      return res.status(404).json({ message: "Dream not found" });
     }
 
     if (dream.user_id !== req.userId) {
-      return res.status(403).json({ message: 'User not authorized' });
+      return res.status(403).json({ message: "User not authorized" });
     }
 
     res.status(200).json(dream);
   } catch (error) {
-    res.status(500).json({ message: 'Something went wrong', error });
+    res.status(500).json({ message: "Something went wrong", error });
   }
 };
 
@@ -67,7 +66,7 @@ exports.createDream = async (req, res) => {
   const { content, is_lucid, emotion, visibility, tags } = req.body;
 
   if (!content) {
-    return res.status(400).json({ message: 'Content is required' });
+    return res.status(400).json({ message: "Content is required" });
   }
 
   try {
@@ -85,7 +84,7 @@ exports.createDream = async (req, res) => {
     });
     res.status(201).json(dream);
   } catch (error) {
-    res.status(500).json({ message: 'Something went wrong', error });
+    res.status(500).json({ message: "Something went wrong", error });
   }
 };
 
@@ -102,11 +101,11 @@ exports.updateDream = async (req, res) => {
     });
 
     if (!dream) {
-      return res.status(404).json({ message: 'Dream not found' });
+      return res.status(404).json({ message: "Dream not found" });
     }
 
     if (dream.user_id !== req.userId) {
-      return res.status(403).json({ message: 'User not authorized' });
+      return res.status(403).json({ message: "User not authorized" });
     }
 
     const tagIds = tags && tags.length > 0 ? await getTagIds(tags) : [];
@@ -124,7 +123,7 @@ exports.updateDream = async (req, res) => {
 
     res.status(200).json(updatedDream);
   } catch (error) {
-    res.status(500).json({ message: 'Something went wrong', error });
+    res.status(500).json({ message: "Something went wrong", error });
   }
 };
 
@@ -140,19 +139,88 @@ exports.deleteDream = async (req, res) => {
     });
 
     if (!dream) {
-      return res.status(404).json({ message: 'Dream not found' });
+      return res.status(404).json({ message: "Dream not found" });
     }
 
     if (dream.user_id !== req.userId) {
-      return res.status(403).json({ message: 'User not authorized' });
+      return res.status(403).json({ message: "User not authorized" });
     }
 
     await prisma.dreamEntry.delete({
       where: { id: parseInt(id) },
     });
 
-    res.status(200).json({ message: 'Dream deleted successfully' });
+    res.status(200).json({ message: "Dream deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Something went wrong', error });
+    res.status(500).json({ message: "Something went wrong", error });
   }
+};
+
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+exports.analyzeDream = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const dream = await prisma.dreamEntry.findUnique({
+            where: { id: parseInt(id) },
+        });
+
+        if (!dream) {
+            return res.status(404).json({ message: 'Dream not found' });
+        }
+
+        if (dream.user_id !== req.userId) {
+            return res.status(403).json({ message: 'User not authorized' });
+        }
+
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const prompt = `Analyze the following dream and provide insights into its possible meanings, symbols, and emotional themes: "${dream.content}"`;
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const analysis = response.text();
+
+        res.status(200).json({ analysis });
+    } catch (error) {
+        res.status(500).json({ message: 'Something went wrong', error });
+    }
+};
+
+exports.searchDreams = async (req, res) => {
+    const { content, tags, fromDate, toDate, isLucid } = req.body;
+
+    try {
+        const where = { user_id: req.userId };
+
+        if (content) {
+            where.content = { contains: content, mode: 'insensitive' };
+        }
+
+        if (tags && tags.length > 0) {
+            where.tags = { some: { name: { in: tags } } };
+        }
+
+        if (fromDate) {
+            where.timestamp = { gte: new Date(fromDate) };
+        }
+
+        if (toDate) {
+            where.timestamp = { ...where.timestamp, lte: new Date(toDate) };
+        }
+
+        if (isLucid !== undefined) {
+            where.is_lucid = isLucid;
+        }
+
+        const dreams = await prisma.dreamEntry.findMany({
+            where,
+            include: { tags: true },
+            orderBy: { timestamp: 'desc' },
+        });
+
+        res.status(200).json(dreams);
+    } catch (error) {
+        res.status(500).json({ message: 'Something went wrong', error });
+    }
 };

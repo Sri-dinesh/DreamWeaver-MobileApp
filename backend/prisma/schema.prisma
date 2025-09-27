@@ -11,29 +11,29 @@ datasource db {
 }
 
 model User {
-  id                      String             @id @default(uuid())
-  username                String             @unique
+  id                      String  @id @default(uuid())
+  username                String  @unique
   password_hash           String
-  email                   String?            @unique
-  reality_check_frequency String             @default("daily")
-  lucid_dream_goal        String             @default("Better dream recall")
-  profile_picture_url     String?            @default("/static/images/default_profile_pic.png")
+  email                   String? @unique
+  reality_check_frequency String  @default("daily")
+  lucid_dream_goal        String  @default("Better dream recall")
+  profile_picture_url     String? @default("/static/images/default_profile_pic.png")
   bio                     String?
 
-  dreams                  DreamEntry[]
-  ai_prompts              AIPrompt[]
-  audio_prompts           AudioPrompt[]
-  sleep_plans             SleepPlan[]
-  lucid_settings          LucidTrainerSetting?
-  spirit_guide_chats      SpiritGuideChat[]
-  dream_art_creations     DreamArt[]
-  sleep_recordings        SleepRecording[]
+  dreams              DreamEntry[]
+  ai_prompts          AIPrompt[]
+  audio_prompts       AudioPrompt[]
+  sleep_plans         SleepPlan[]
+  lucid_settings      LucidTrainerSetting?
+  spirit_guide_chats  SpiritGuideChat[]
+  dream_art_creations DreamArt[]
+  sleep_recordings    SleepRecording[]
 
-  sent_friend_requests    FriendRequest[]    @relation("SentFriendRequests")
-  received_friend_requests FriendRequest[]   @relation("ReceivedFriendRequests")
+  sent_friend_requests     FriendRequest[] @relation("SentFriendRequests")
+  received_friend_requests FriendRequest[] @relation("ReceivedFriendRequests")
 
-  followedBy              User[]             @relation("UserFollows")
-  following               User[]             @relation("UserFollows")
+  followedBy User[] @relation("UserFollows")
+  following  User[] @relation("UserFollows")
 }
 
 model DreamEntry {
@@ -46,8 +46,8 @@ model DreamEntry {
   emotion     String?
   visibility  String   @default("private")
 
-  user        User     @relation(fields: [user_id], references: [id])
-  tags        Tag[]    @relation("DreamEntryTags")
+  user User  @relation(fields: [user_id], references: [id])
+  tags Tag[] @relation("DreamEntryTags")
 }
 
 model Tag {
@@ -64,8 +64,8 @@ model AIPrompt {
   user_input  String   @db.Text
   ai_response String   @db.Text
 
-  user        User     @relation(fields: [user_id], references: [id])
-  audio_file  AudioPrompt?
+  user       User         @relation(fields: [user_id], references: [id])
+  audio_file AudioPrompt?
 }
 
 model AudioPrompt {
@@ -77,19 +77,19 @@ model AudioPrompt {
   timestamp     DateTime @default(now())
   ai_prompt_id  Int?     @unique
 
-  user      User     @relation(fields: [user_id], references: [id])
+  user      User      @relation(fields: [user_id], references: [id])
   ai_prompt AIPrompt? @relation(fields: [ai_prompt_id], references: [id])
 }
 
 model SleepPlan {
-  id                   Int      @id @default(autoincrement())
+  id                   Int       @id @default(autoincrement())
   user_id              String
-  plan_date            DateTime @db.Date
-  goal                 String   @db.Text
-  bedtime_ritual       String?  @db.Text
+  plan_date            DateTime  @db.Date
+  goal                 String    @db.Text
+  bedtime_ritual       String?   @db.Text
   sleep_time           DateTime? @db.Time
   wake_time            DateTime? @db.Time
-  ai_ritual_suggestion String?  @db.Text
+  ai_ritual_suggestion String?   @db.Text
 
   user User @relation(fields: [user_id], references: [id])
 
@@ -97,11 +97,11 @@ model SleepPlan {
 }
 
 model LucidTrainerSetting {
-  id                 Int      @id @default(autoincrement())
-  user_id            String   @unique
+  id                 Int       @id @default(autoincrement())
+  user_id            String    @unique
   reality_check_time DateTime? @db.Time
-  rc_frequency       String   @default("off")
-  rc_method          String   @default("hand-check")
+  rc_frequency       String    @default("off")
+  rc_method          String    @default("hand-check")
   last_rc_reminder   DateTime? @default(now())
 
   user User @relation(fields: [user_id], references: [id])
@@ -129,13 +129,13 @@ model DreamArt {
 }
 
 model SleepRecording {
-  id               Int      @id @default(autoincrement())
+  id               Int       @id @default(autoincrement())
   user_id          String
-  start_time       DateTime @default(now())
+  start_time       DateTime  @default(now())
   end_time         DateTime?
   file_path        String
   duration_seconds Int?
-  notes            String?  @db.Text
+  notes            String?   @db.Text
 
   user User @relation(fields: [user_id], references: [id])
 }

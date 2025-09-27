@@ -10,4 +10,6 @@ router.use(verifyToken);
 router.route('/').get(dreamartController.getDreamArt).post(upload.single('image'), dreamartController.uploadDreamArt);
 router.route('/:id').delete(dreamartController.deleteDreamArt);
 
+router.route('/generate').post(dreamartController.generateDreamArt);
+
 module.exports = router;

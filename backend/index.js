@@ -23,6 +23,9 @@ const lucidRoutes = require('./src/routes/lucid.routes');
 const spiritRoutes = require('./src/routes/spirit.routes');
 const dreamartRoutes = require('./src/routes/dreamart.routes');
 const sleeprecordingRoutes = require('./src/routes/sleeprecording.routes');
+const analyticsRoutes = require('./src/routes/analytics.routes');
+const audiolibraryRoutes = require('./src/routes/audiolibrary.routes');
+const sharedRoutes = require('./src/routes/shared.routes');
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to DreamWeaver V2 backend.' });
@@ -38,6 +41,9 @@ app.use('/api/lucid', lucidRoutes);
 app.use('/api/spirit', spiritRoutes);
 app.use('/api/dreamart', dreamartRoutes);
 app.use('/api/recordings', sleeprecordingRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/audiolibrary', audiolibraryRoutes);
+app.use('/api/shared', sharedRoutes);
 
 // start server
 const PORT = process.env.PORT || 8080;

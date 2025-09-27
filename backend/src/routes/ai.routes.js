@@ -13,4 +13,9 @@ router.route('/audio/prompts').get(aiController.getAudioPrompts);
 router.route('/audio/prompts/tts').post(aiController.createAudioPromptFromTTS);
 router.route('/audio/prompts/:id').delete(aiController.deleteAudioPrompt);
 
+router.route('/affirmation').post(aiController.generateAffirmation);
+router.route('/creative-prompt').post(aiController.generateCreativePrompt);
+router.route('/binaural-beat').post(aiController.generateBinauralBeat);
+router.route('/subliminal-audio').post(aiController.generateSubliminalAudio);
+
 module.exports = router;

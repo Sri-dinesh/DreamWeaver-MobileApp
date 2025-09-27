@@ -1,5 +1,4 @@
-
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 // @desc    Get all sleep plans for a user
@@ -9,11 +8,11 @@ exports.getSleepPlans = async (req, res) => {
   try {
     const plans = await prisma.sleepPlan.findMany({
       where: { user_id: req.userId },
-      orderBy: { plan_date: 'desc' },
+      orderBy: { plan_date: "desc" },
     });
     res.status(200).json(plans);
   } catch (error) {
-    res.status(500).json({ message: 'Something went wrong', error });
+    res.status(500).json({ message: "Something went wrong", error });
   }
 };
 
@@ -30,11 +29,13 @@ exports.getSleepPlanByDate = async (req, res) => {
       },
     });
     if (!plan) {
-      return res.status(404).json({ message: 'Sleep plan not found for this date' });
+      return res
+        .status(404)
+        .json({ message: "Sleep plan not found for this date" });
     }
     res.status(200).json(plan);
   } catch (error) {
-    res.status(500).json({ message: 'Something went wrong', error });
+    res.status(500).json({ message: "Something went wrong", error });
   }
 };
 
@@ -45,7 +46,7 @@ exports.createOrUpdateSleepPlan = async (req, res) => {
   const { plan_date, goal, sleep_time, wake_time } = req.body;
 
   if (!plan_date || !goal) {
-    return res.status(400).json({ message: 'Date and goal are required' });
+    return res.status(400).json({ message: "Date and goal are required" });
   }
 
   const data = {
@@ -69,7 +70,7 @@ exports.createOrUpdateSleepPlan = async (req, res) => {
     });
     res.status(201).json(plan);
   } catch (error) {
-    res.status(500).json({ message: 'Something went wrong', error });
+    res.status(500).json({ message: "Something went wrong", error });
   }
 };
 
@@ -85,19 +86,25 @@ exports.deleteSleepPlan = async (req, res) => {
     });
 
     if (!plan) {
-      return res.status(404).json({ message: 'Sleep plan not found' });
+      return res.status(404).json({ message: "Sleep plan not found" });
     }
 
     if (plan.user_id !== req.userId) {
-      return res.status(403).json({ message: 'User not authorized' });
+      return res.status(403).json({ message: "User not authorized" });
     }
 
     await prisma.sleepPlan.delete({
       where: { id: parseInt(id) },
     });
 
-    res.status(200).json({ message: 'Sleep plan deleted successfully' });
+    res.status(500).json({ message: "Something went wrong", error });
   } catch (error) {
-    res.status(500).json({ message: 'Something went wrong', error });
+    res.status(500).json({ message: "Something went wrong", error });
   }
+};
+
+exports.generateRitual = async (req, res) => {
+  res
+    .status(200)
+    .json({ message: "Sleep ritual generation will be available soon." });
 };

@@ -1,8 +1,7 @@
-
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 // @desc    Get all dream art for a user
 // @route   GET /api/dreamart
@@ -11,11 +10,11 @@ exports.getDreamArt = async (req, res) => {
   try {
     const art = await prisma.dreamArt.findMany({
       where: { user_id: req.userId },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { timestamp: "desc" },
     });
     res.status(200).json(art);
   } catch (error) {
-    res.status(500).json({ message: 'Something went wrong', error });
+    res.status(500).json({ message: "Something went wrong", error });
   }
 };
 
@@ -27,7 +26,7 @@ exports.uploadDreamArt = async (req, res) => {
   const image_url = req.file ? `/images/${req.file.filename}` : null;
 
   if (!prompt || !image_url) {
-    return res.status(400).json({ message: 'Prompt and image are required' });
+    return res.status(400).json({ message: "Prompt and image are required" });
   }
 
   try {
@@ -41,7 +40,7 @@ exports.uploadDreamArt = async (req, res) => {
     });
     res.status(201).json(art);
   } catch (error) {
-    res.status(500).json({ message: 'Something went wrong', error });
+    res.status(500).json({ message: "Something went wrong", error });
   }
 };
 
@@ -57,11 +56,11 @@ exports.deleteDreamArt = async (req, res) => {
     });
 
     if (!art) {
-      return res.status(404).json({ message: 'Dream art not found' });
+      return res.status(404).json({ message: "Dream art not found" });
     }
 
     if (art.user_id !== req.userId) {
-      return res.status(403).json({ message: 'User not authorized' });
+      return res.status(403).json({ message: "User not authorized" });
     }
 
     // Delete the file from the filesystem
@@ -74,8 +73,14 @@ exports.deleteDreamArt = async (req, res) => {
       where: { id: parseInt(id) },
     });
 
-    res.status(200).json({ message: 'Dream art deleted successfully' });
+    res.status(500).json({ message: "Something went wrong", error });
   } catch (error) {
-    res.status(500).json({ message: 'Something went wrong', error });
+    res.status(500).json({ message: "Something went wrong", error });
   }
+};
+
+exports.generateDreamArt = async (req, res) => {
+  res
+    .status(200)
+    .json({ message: "AI dream art generation will be available soon." });
 };

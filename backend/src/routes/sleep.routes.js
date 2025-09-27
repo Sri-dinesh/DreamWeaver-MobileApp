@@ -10,4 +10,6 @@ router.route('/plans').get(sleepController.getSleepPlans).post(sleepController.c
 router.route('/plans/:date').get(sleepController.getSleepPlanByDate);
 router.route('/plans/:id').delete(sleepController.deleteSleepPlan);
 
+router.route('/plans/generate-ritual').post(sleepController.generateRitual);
+
 module.exports = router;

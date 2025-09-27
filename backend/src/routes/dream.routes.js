@@ -13,4 +13,7 @@ router
   .put(dreamController.updateDream)
   .delete(dreamController.deleteDream);
 
+router.route('/search').post(dreamController.searchDreams);
+router.route('/:id/analyze').post(dreamController.analyzeDream);
+
 module.exports = router;
