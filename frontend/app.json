@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "dreamweaver",
+    "slug": "dreamweaver",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/dreamweaverLogo1.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/dreamweaverLogo1.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-web-browser",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
