@@ -103,8 +103,27 @@ exports.deleteSleepPlan = async (req, res) => {
   }
 };
 
+const { HfInference } = require("@huggingface/inference");
+
+const hf = new HfInference(process.env.HF_TOKEN);
+
 exports.generateRitual = async (req, res) => {
-  res
-    .status(200)
-    .json({ message: "Sleep ritual generation will be available soon." });
+  const { goal } = req.body;
+
+  if (!goal) {
+    return res.status(400).json({ message: "Goal is required" });
+  }
+
+  const prompt = `Create a personalized sleep ritual for someone whose goal is to "${goal}". The ritual should be calming and help them achieve their goal.`;
+
+  try {
+    const response = await hf.textGeneration({
+      model: "gpt2",
+      inputs: prompt,
+    });
+
+    res.status(200).json({ ritual: response.generated_text });
+  } catch (error) {
+    res.status(500).json({ message: "Something went wrong", error });
+  }
 };
