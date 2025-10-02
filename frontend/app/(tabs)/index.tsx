@@ -1,10 +1,18 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
+import { fetchAllStats, Stats } from '@/services/statsService';
 
 const { width } = Dimensions.get('window');
 
@@ -18,14 +26,14 @@ interface FeatureCard {
 }
 
 const features: FeatureCard[] = [
-  {
-    title: 'Dream Journal',
-    description: 'Record and analyze your dreams',
-    icon: 'book',
-    route: '/journal',
-    color: '#7C3AED',
-    gradient: ['#7C3AED', '#A855F7'],
-  },
+  // {
+  //   title: 'Dream Journal',
+  //   description: 'Record and analyze your dreams',
+  //   icon: 'book',
+  //   route: '/journal',
+  //   color: '#7C3AED',
+  //   gradient: ['#7C3AED', '#A855F7'],
+  // },
   {
     title: 'Sleep Planner',
     description: 'Plan your sleep schedule',
@@ -33,14 +41,6 @@ const features: FeatureCard[] = [
     route: '/sleep-planner',
     color: '#3B82F6',
     gradient: ['#3B82F6', '#60A5FA'],
-  },
-  {
-    title: 'Audio Library',
-    description: 'Guided meditations & sounds',
-    icon: 'headset',
-    route: '/audio',
-    color: '#10B981',
-    gradient: ['#10B981', '#34D399'],
   },
   {
     title: 'Lucid Trainer',
@@ -86,49 +86,135 @@ const features: FeatureCard[] = [
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const [greeting, setGreeting] = useState('Hello');
+  const [stats, setStats] = useState<Stats>({
+    dreamCount: 0,
+    lucidDreamCount: 0,
+    avgSleep: '0h',
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Helper to get token
+  const getToken = async () => {
+    try {
+      return localStorage.getItem('userToken');
+    } catch (error) {
+      console.error('Error getting token:', error);
+      return null;
+    }
+  };
+
+  // Function to get appropriate greeting based on time of day
+  const getGreeting = (hour: number): string => {
+    if (hour >= 5 && hour < 12) return 'Good Morning';
+    if (hour >= 12 && hour < 18) return 'Good Afternoon';
+    if (hour >= 18 && hour < 22) return 'Good Evening';
+    return 'Good Night';
+  };
+
+  // Effect for updating greeting based on time of day
+  useEffect(() => {
+    const updateGreeting = () => {
+      const currentHour = new Date().getHours();
+      setGreeting(getGreeting(currentHour));
+    };
+
+    updateGreeting(); // Run once immediately
+    const interval = setInterval(updateGreeting, 60 * 1000); // Update every minute
+
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, []);
+
+  // Effect for loading stats
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setLoading(true);
+        const fetchedStats = await fetchAllStats();
+        setStats(fetchedStats);
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStats();
+  }, []);
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#4C1D95', '#7C3AED', '#A855F7']} style={styles.header}>
+      <LinearGradient
+        colors={['#4C1D95', '#7C3AED', '#A855F7']}
+        style={styles.header}
+      >
         <View style={styles.headerOverlay}>
           <View style={styles.headerContent}>
             <View style={styles.greetingSection}>
-              <Text style={styles.greeting}>Good Evening</Text>
-              <Text style={styles.userName}>{user?.name || 'Dream Explorer'}</Text>
-              <Text style={styles.welcomeText}>Ready to explore your dreams?</Text>
+              <Text style={styles.greeting}>{greeting}</Text>
+              <Text style={styles.userName}>
+                {user?.username || 'Dream Explorer'}
+              </Text>
+              <Text style={styles.welcomeText}>
+                Ready to explore your dreams?
+              </Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.profileButton}
               onPress={() => router.push('/profile')}
             >
               <BlurView intensity={20} style={styles.profileButtonBlur}>
-                <Ionicons name="person-circle-outline" size={32} color="white" />
+                <Ionicons
+                  name="person-circle-outline"
+                  size={32}
+                  color="white"
+                />
               </BlurView>
             </TouchableOpacity>
           </View>
         </View>
       </LinearGradient>
 
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.content}>
           <View style={styles.statsContainer}>
-            <LinearGradient colors={['#FFFFFF', '#F8FAFC']} style={styles.statCard}>
+            {/* Dreams logged card */}
+            <LinearGradient
+              colors={['#FFFFFF', '#F8FAFC']}
+              style={styles.statCard}
+            >
               <Ionicons name="book-outline" size={24} color="#7C3AED" />
-              <Text style={styles.statNumber}>12</Text>
+              <Text style={styles.statNumber}>
+                {loading ? '-' : stats.dreamCount}
+              </Text>
               <Text style={styles.statLabel}>Dreams Logged</Text>
             </LinearGradient>
-            <LinearGradient colors={['#FFFFFF', '#F8FAFC']} style={styles.statCard}>
+
+            {/* Lucid dreams card */}
+            <LinearGradient
+              colors={['#FFFFFF', '#F8FAFC']}
+              style={styles.statCard}
+            >
               <Ionicons name="flash-outline" size={24} color="#10B981" />
-              <Text style={styles.statNumber}>3</Text>
+              <Text style={styles.statNumber}>
+                {loading ? '-' : stats.lucidDreamCount}
+              </Text>
               <Text style={styles.statLabel}>Lucid Dreams</Text>
             </LinearGradient>
-            <LinearGradient colors={['#FFFFFF', '#F8FAFC']} style={styles.statCard}>
+
+            {/* Average sleep card */}
+            <LinearGradient
+              colors={['#FFFFFF', '#F8FAFC']}
+              style={styles.statCard}
+            >
               <Ionicons name="moon-outline" size={24} color="#3B82F6" />
-              <Text style={styles.statNumber}>7.2h</Text>
+              <Text style={styles.statNumber}>
+                {loading ? '-' : stats.avgSleep}
+              </Text>
               <Text style={styles.statLabel}>Avg Sleep</Text>
             </LinearGradient>
           </View>
@@ -146,11 +232,20 @@ export default function HomeScreen() {
                     colors={['#FFFFFF', '#FAFBFC']}
                     style={styles.featureCardGradient}
                   >
-                    <LinearGradient colors={feature.gradient} style={styles.featureIcon}>
-                      <Ionicons name={feature.icon as any} size={24} color="white" />
+                    <LinearGradient
+                      colors={feature.gradient as [string, string]}
+                      style={styles.featureIcon}
+                    >
+                      <Ionicons
+                        name={feature.icon as any}
+                        size={24}
+                        color="white"
+                      />
                     </LinearGradient>
                     <Text style={styles.featureTitle}>{feature.title}</Text>
-                    <Text style={styles.featureDescription}>{feature.description}</Text>
+                    <Text style={styles.featureDescription}>
+                      {feature.description}
+                    </Text>
                   </LinearGradient>
                 </TouchableOpacity>
               ))}

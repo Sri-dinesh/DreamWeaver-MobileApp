@@ -1,43 +1,76 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 
 export default function EditProfileScreen() {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: user?.name?.split(' ')[0] || '',
-    lastName: user?.name?.split(' ').slice(1).join(' ') || '',
-    email: user?.email || '',
-    bio: 'Passionate lucid dreamer exploring the depths of consciousness',
+    username: '',
+    bio: '',
+    profile_picture_url: '',
   });
-  const [isSaving, setIsSaving] = useState(false);
+
+  // Load user data
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        username: user.username || '',
+        bio: user.bio || '',
+        profile_picture_url: user.profile_picture_url || '',
+      });
+    }
+  }, [user]);
 
   const handleSave = async () => {
-    if (!formData.firstName.trim() || !formData.email.trim()) {
-      Alert.alert('Error', 'First name and email are required');
+    if (!formData.username.trim()) {
+      Alert.alert('Error', 'Username is required');
       return;
     }
 
-    setIsSaving(true);
+    setLoading(true);
     try {
-      // Mock save - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await updateProfile({
+        username: formData.username,
+        bio: formData.bio,
+        profile_picture_url: formData.profile_picture_url,
+      });
+
       Alert.alert('Success', 'Profile updated successfully', [
-        { text: 'OK', onPress: () => router.back() }
+        { text: 'OK', onPress: () => router.back() },
       ]);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } catch (error: any) {
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to update profile. Please try again.'
+      );
     } finally {
-      setIsSaving(false);
+      setLoading(false);
     }
   };
 
   const updateField = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  if (!user) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#7C3AED" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -50,12 +83,12 @@ export default function EditProfileScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
         <TouchableOpacity
-          style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+          style={[styles.saveButton, loading && styles.saveButtonDisabled]}
           onPress={handleSave}
-          disabled={isSaving}
+          disabled={loading}
         >
           <Text style={styles.saveButtonText}>
-            {isSaving ? 'Saving...' : 'Save'}
+            {loading ? 'Saving...' : 'Save'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -65,7 +98,7 @@ export default function EditProfileScreen() {
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {formData.firstName.charAt(0) || 'U'}
+                {formData.username.charAt(0)?.toUpperCase() || 'U'}
               </Text>
             </View>
             <TouchableOpacity style={styles.avatarEditButton}>
@@ -77,28 +110,19 @@ export default function EditProfileScreen() {
 
         <View style={styles.form}>
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>First Name *</Text>
+            <Text style={styles.fieldLabel}>Username *</Text>
             <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
-              <TextInput
-                style={styles.textInput}
-                value={formData.firstName}
-                onChangeText={(value) => updateField('firstName', value)}
-                placeholder="Enter your first name"
-                placeholderTextColor="#9CA3AF"
+              <Ionicons
+                name="person-outline"
+                size={20}
+                color="#9CA3AF"
+                style={styles.inputIcon}
               />
-            </View>
-          </View>
-
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Last Name</Text>
-            <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
-                value={formData.lastName}
-                onChangeText={(value) => updateField('lastName', value)}
-                placeholder="Enter your last name"
+                value={formData.username}
+                onChangeText={(value) => updateField('username', value)}
+                placeholder="Enter your username"
                 placeholderTextColor="#9CA3AF"
               />
             </View>
@@ -107,10 +131,15 @@ export default function EditProfileScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Email * (Read-only)</Text>
             <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+              <Ionicons
+                name="mail-outline"
+                size={20}
+                color="#9CA3AF"
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={[styles.textInput, styles.readOnlyInput]}
-                value={formData.email}
+                value={user.email}
                 placeholder="Enter your email"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="email-address"
@@ -136,28 +165,9 @@ export default function EditProfileScreen() {
               />
             </View>
             <Text style={styles.characterCount}>
-              {formData.bio.length}/200 characters
+              {formData.bio?.length || 0}/200 characters
             </Text>
           </View>
-        </View>
-
-        <View style={styles.dangerZone}>
-          <Text style={styles.dangerZoneTitle}>Danger Zone</Text>
-          <TouchableOpacity
-            style={styles.dangerButton}
-            onPress={() => {
-              Alert.alert(
-                'Delete Account',
-                'This action cannot be undone. All your dream data will be permanently deleted.',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Delete', style: 'destructive' },
-                ]
-              );
-            }}
-          >
-            <Text style={styles.dangerButtonText}>Delete Account</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
@@ -167,6 +177,12 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#F9FAFB',
   },
   header: {
@@ -277,6 +293,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
   },
+  readOnlyInput: {
+    color: '#9CA3AF',
+  },
   textArea: {
     height: 80,
     textAlignVertical: 'top',
@@ -286,31 +305,5 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'right',
     marginTop: 4,
-  },
-  dangerZone: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#FEE2E2',
-  },
-  dangerZoneTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#DC2626',
-    marginBottom: 12,
-  },
-  dangerButton: {
-    backgroundColor: '#FEF2F2',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-  },
-  dangerButtonText: {
-    color: '#DC2626',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

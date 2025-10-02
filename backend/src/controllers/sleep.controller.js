@@ -127,3 +127,47 @@ exports.generateRitual = async (req, res) => {
     res.status(500).json({ message: "Something went wrong", error });
   }
 };
+
+// @desc    Get sleep stats for a user
+// @route   GET /api/sleep/stats
+// @access  Private
+exports.getSleepStats = async (req, res) => {
+  try {
+    // Get sleep records for the past month
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    const sleepRecords = await prisma.sleepRecord.findMany({
+      where: {
+        user_id: req.userId,
+        date: {
+          gte: oneMonthAgo,
+        },
+      },
+      select: {
+        duration: true,
+      },
+    });
+
+    // Calculate average sleep duration
+    let averageSleep = 0;
+    if (sleepRecords.length > 0) {
+      const totalSleep = sleepRecords.reduce(
+        (acc, record) => acc + record.duration,
+        0
+      );
+      averageSleep = totalSleep / sleepRecords.length;
+    }
+
+    res.status(200).json({
+      averageSleep,
+      recordsCount: sleepRecords.length,
+    });
+  } catch (error) {
+    console.error("Error fetching sleep stats:", error);
+    res.status(500).json({
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};

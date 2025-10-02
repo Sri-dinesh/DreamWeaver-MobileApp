@@ -1,34 +1,68 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen() {
-  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
 
   const handleRegister = async () => {
-    if (!name || !email || !password) {
+    if (!username || !email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+    // Basic email validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    // Password strength validation
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+={}[\]|\\:;"'<>,.?/])[A-Za-z\d!@#$%^&*()_\-+={}[\]|\\:;"'<>,.?/]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      Alert.alert(
+        'Weak Password',
+        'Password must be at least 8 characters and include uppercase and lowercase letters, numbers, and special characters'
+      );
+      return;
+    }
+
+    // Username validation
+    const usernameRegex = /^[a-zA-Z0-9_-]{3,30}$/;
+    if (!usernameRegex.test(username)) {
+      Alert.alert(
+        'Invalid Username',
+        'Username must be 3-30 characters and can only contain letters, numbers, underscores, and hyphens'
+      );
       return;
     }
 
     setLoading(true);
     try {
-      await register(name, email, password);
+      await register(username, email, password);
       router.replace('/(tabs)');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Registration failed. Please try again.';
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Registration failed. Please try again.';
       Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
@@ -47,23 +81,35 @@ export default function RegisterScreen() {
 
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join the dream exploration community</Text>
+          <Text style={styles.subtitle}>
+            Join the dream exploration community
+          </Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+            <Ionicons
+              name="person-outline"
+              size={20}
+              color="#9CA3AF"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
-              placeholder="Full Name"
+              placeholder="Username"
               placeholderTextColor="#9CA3AF"
-              value={name}
-              onChangeText={setName}
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
             />
           </View>
-
           <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+            <Ionicons
+              name="mail-outline"
+              size={20}
+              color="#9CA3AF"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -74,29 +120,37 @@ export default function RegisterScreen() {
               autoCapitalize="none"
             />
           </View>
-
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+            <Ionicons
+              name="lock-closed-outline"
+              size={20}
+              color="#9CA3AF"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
-              placeholder="Password (min 6 characters)"
+              placeholder="Password"
               placeholderTextColor="#9CA3AF"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
             />
           </View>
-
+          <Text style={styles.passwordHint}>
+            Password must contain at least 8 characters including uppercase,
+            lowercase, numbers, and special characters.
+          </Text>
           <TouchableOpacity
             style={[styles.registerButton, loading && styles.buttonDisabled]}
             onPress={handleRegister}
             disabled={loading}
           >
-            <Text style={styles.registerButtonText}>
-              {loading ? 'Creating Account...' : 'Create Account'}
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="#4C1D95" size="small" />
+            ) : (
+              <Text style={styles.registerButtonText}>Create Account</Text>
+            )}
           </TouchableOpacity>
-
           <View style={styles.socialContainer}>
             <Text style={styles.orText}>Or sign up with</Text>
             <View style={styles.socialButtons}>
@@ -108,11 +162,16 @@ export default function RegisterScreen() {
               </TouchableOpacity>
             </View>
           </View>
-
           <TouchableOpacity onPress={() => router.push('/auth/login')}>
             <Text style={styles.linkText}>
-              Already have an account? <Text style={styles.linkTextBold}>Sign In</Text>
+              Already have an account?{' '}
+              <Text style={styles.linkTextBold}>Sign In</Text>
             </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/auth/forgot-password')}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -165,6 +224,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
   },
+  passwordHint: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    marginBottom: 16,
+    marginTop: -8,
+    paddingHorizontal: 4,
+  },
   registerButton: {
     backgroundColor: 'white',
     borderRadius: 12,
@@ -209,5 +275,12 @@ const styles = StyleSheet.create({
   linkTextBold: {
     color: 'white',
     fontWeight: '600',
+  },
+  forgotPasswordText: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    fontSize: 14,
+    marginTop: 12,
+    textDecorationLine: 'underline',
   },
 });

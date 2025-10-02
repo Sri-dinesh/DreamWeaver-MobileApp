@@ -1,223 +1,270 @@
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
-import { api } from '@/api/client';
-import { authService } from '@/services/authService';
-import { AuthContextType, User } from '@/types';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import axios from 'axios';
+import { router } from 'expo-router';
+import storage from '@/utils/storage';
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  profile_picture_url?: string;
+  bio?: string;
+  preferences?: {
+    reality_check_frequency: string;
+    lucid_dream_goal: string;
+  };
+}
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+interface AuthContextType {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  user: User | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (
+    username: string,
+    email: string,
+    password: string
+  ) => Promise<void>;
+  logout: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
+  updatePreferences: (preferences: any) => Promise<void>;
+  forgotPassword: (
+    username: string,
+    email: string,
+    newPassword: string
+  ) => Promise<void>;
+}
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
+const AuthContext = createContext<AuthContextType>({
+  isAuthenticated: false,
+  isLoading: true,
+  user: null,
+  login: async () => {},
+  register: async () => {},
+  logout: async () => {},
+  updateProfile: async () => {},
+  updatePreferences: async () => {},
+  forgotPassword: async () => {},
+});
+
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const isMounted = useRef(true);
+  const [user, setUser] = useState<User | null>(null);
 
-  // Check authentication status on app start
+  // Check if user is already authenticated on mount
   useEffect(() => {
-    checkAuthStatus();
-    
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
+    const loadUser = async () => {
+      try {
+        const token = await storage.getItem('userToken');
 
-  const checkAuthStatus = async () => {
-    try {
-      if (isMounted.current) setIsLoading(true);
-      const isAuth = await authService.isAuthenticated();
-      
-      if (isAuth) {
-        // Try to get user data from storage first
-        const userData = await authService.getUserData();
-        if (userData) {
-          if (isMounted.current) {
-            setUser(userData);
-            setIsAuthenticated(true);
-          }
-        } else {
-          // If no user data in storage, fetch from API
+        if (token) {
+          // Configure axios to use the token for future requests
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+          // Fetch user data
           try {
-            const profile = await api.user.getProfile();
-            if (isMounted.current) {
-              setUser(profile);
-              setIsAuthenticated(true);
-            }
-            await authService.storeUserData(profile);
-          } catch (error) {
-            // If API call fails, clear auth data
-            await authService.clearAuthData();
-            if (isMounted.current) setIsAuthenticated(false);
+            const response = await axios.get(`${API_URL}/api/users/me`);
+            setUser(response.data);
+            setIsAuthenticated(true);
+          } catch (apiError) {
+            console.error('API error:', apiError);
+            await storage.removeItem('userToken');
           }
         }
-      } else {
-        if (isMounted.current) setIsAuthenticated(false);
+      } catch (error) {
+        console.error('Failed to load user data', error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error checking auth status:', error);
-      if (isMounted.current) setIsAuthenticated(false);
-    } finally {
-      if (isMounted.current) setIsLoading(false);
-    }
-  };
+    };
+
+    loadUser();
+  }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      if (isMounted.current) setIsLoading(true);
-      
-      // For development - simulate successful login
-      if (process.env.NODE_ENV === 'development') {
-        const mockUser = {
-          id: '1',
-          name: 'Demo User',
-          email,
-          avatar: null,
-          createdAt: new Date().toISOString(),
-        };
-        
-        const mockTokens = {
-          accessToken: 'mock-access-token',
-          refreshToken: 'mock-refresh-token',
-        };
-        
-        await authService.storeTokens(mockTokens.accessToken, mockTokens.refreshToken);
-        await authService.storeUserData(mockUser);
-        setUser(mockUser);
-        setIsAuthenticated(true);
-      } else {
-        const response = await api.auth.login(email, password);
-        
-        if (response.user && response.tokens) {
-          await authService.storeTokens(response.tokens.accessToken, response.tokens.refreshToken);
-          await authService.storeUserData(response.user);
-          setUser(response.user);
-          setIsAuthenticated(true);
-        }
-      }
-      await authService.storeUserData(userData);
-      
-      if (isMounted.current) {
-        setUser(userData);
-        setIsAuthenticated(true);
-      }
-      
-      return userData;
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
-    } finally {
-      if (isMounted.current) setIsLoading(false);
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
+        email,
+        password,
+      });
+
+      console.log('Login response:', response.data);
+
+      const { token, user } = response.data;
+
+      // Save token to storage
+      await storage.setItem('userToken', token);
+
+      // Configure axios
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      // Update state
+      setUser(user);
+      setIsAuthenticated(true);
+
+      // Navigate to home screen
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      console.error('Login error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to login');
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (
+    username: string,
+    email: string,
+    password: string
+  ) => {
     try {
-      if (isMounted.current) setIsLoading(true);
-      
-      // For development - simulate successful registration
-      if (process.env.NODE_ENV === 'development') {
-        const mockUser = {
-          id: Date.now().toString(),
-          name,
-          email,
-          avatar: null,
-          createdAt: new Date().toISOString(),
-        };
-        
-        const mockTokens = {
-          accessToken: 'mock-access-token',
-          refreshToken: 'mock-refresh-token',
-        };
-        
-        await authService.storeTokens(mockTokens.accessToken, mockTokens.refreshToken);
-        await authService.storeUserData(mockUser);
-        setUser(mockUser);
-        setIsAuthenticated(true);
-      } else {
-        const response = await api.auth.register(name, email, password);
-        
-        if (response.user && response.tokens) {
-          await authService.storeTokens(response.tokens.accessToken, response.tokens.refreshToken);
-          await authService.storeUserData(response.user);
-          setUser(response.user);
-          setIsAuthenticated(true);
-        }
-      }
-      await authService.storeUserData(userData);
-      
-      if (isMounted.current) {
-        setUser(userData);
-        setIsAuthenticated(true);
-      }
-      
-      return userData;
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
-    } finally {
-      if (isMounted.current) setIsLoading(false);
+      const response = await axios.post(`${API_URL}/api/auth/register`, {
+        username,
+        email,
+        password,
+      });
+
+      const { token, user } = response.data;
+
+      // Save token to storage
+      await storage.setItem('userToken', token);
+
+      // Configure axios
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      // Update state
+      setUser(user);
+      setIsAuthenticated(true);
+
+      // Navigate to home screen
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      console.error(
+        'Registration error:',
+        error.response?.data || error.message
+      );
+      throw new Error(error.response?.data?.message || 'Failed to register');
     }
   };
 
   const logout = async () => {
     try {
-      if (isMounted.current) setIsLoading(true);
-      
-      // Call logout API
-      try {
-        await api.auth.logout();
-      } catch (error) {
-        // Continue with logout even if API call fails
-        console.error('Logout API error:', error);
-      }
-      
-      // Clear all auth data
-      await authService.clearAuthData();
-      
-      if (isMounted.current) {
-        setUser(null);
-        setIsAuthenticated(false);
-      }
+      await storage.removeItem('userToken');
+
+      // Reset state
+      setUser(null);
+      setIsAuthenticated(false);
+
+      // Remove axios header
+      delete axios.defaults.headers.common['Authorization'];
+
+      // Navigate to landing page
+      router.replace('/');
     } catch (error) {
       console.error('Logout error:', error);
-      throw error;
-    } finally {
-      if (isMounted.current) setIsLoading(false);
+      // Even if there's an error, still reset the auth state
+      setUser(null);
+      setIsAuthenticated(false);
+      router.replace('/');
     }
   };
 
-  const updateUser = async (userData: Partial<User>) => {
+  // Update profile method
+  const updateProfile = async (data: Partial<User>) => {
     try {
-      const updatedUser = await api.user.updateProfile(userData);
-      if (isMounted.current) setUser(updatedUser);
-      await authService.storeUserData(updatedUser);
-      return updatedUser;
-    } catch (error) {
-      console.error('Update user error:', error);
-      throw error;
+      const response = await axios.put(`${API_URL}/api/users/profile`, data);
+
+      // Update user state with the response
+      setUser((prevUser) => {
+        if (!prevUser) return response.data;
+        return { ...prevUser, ...response.data };
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        'Update profile error:',
+        error.response?.data || error.message
+      );
+      throw new Error(
+        error.response?.data?.message || 'Failed to update profile'
+      );
     }
   };
 
-  const value: AuthContextType = {
-    user,
-    isAuthenticated,
-    isLoading,
-    login,
-    register,
-    logout,
-    updateUser,
-    checkAuthStatus,
+  // Update preferences method
+  const updatePreferences = async (preferences: any) => {
+    try {
+      const response = await axios.put(`${API_URL}/api/users/preferences`, {
+        preferences,
+      });
+
+      // Update user state with the new preferences
+      setUser((prevUser) => {
+        if (!prevUser) return null;
+        return {
+          ...prevUser,
+          preferences: response.data.preferences || preferences,
+        };
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        'Update preferences error:',
+        error.response?.data || error.message
+      );
+      throw new Error(
+        error.response?.data?.message || 'Failed to update preferences'
+      );
+    }
+  };
+
+  // Add this new method
+  const forgotPassword = async (
+    username: string,
+    email: string,
+    newPassword: string
+  ) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/forgot-password`, {
+        username,
+        email,
+        newPassword,
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        'Password reset error:',
+        error.response?.data || error.message
+      );
+      throw new Error(
+        error.response?.data?.message || 'Failed to reset password'
+      );
+    }
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        isLoading,
+        user,
+        login,
+        register,
+        logout,
+        updateProfile,
+        updatePreferences,
+        forgotPassword,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+};

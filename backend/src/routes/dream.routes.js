@@ -1,19 +1,26 @@
-
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const dreamController = require('../controllers/dream.controller');
-const verifyToken = require('../middleware/auth.middleware');
+const dreamController = require("../controllers/dream.controller");
+const verifyToken = require("../middleware/auth.middleware");
 
 router.use(verifyToken);
 
-router.route('/').get(dreamController.getDreams).post(dreamController.createDream);
+// Static routes first
+router.get("/stats", dreamController.getDreamStats);
+router.post("/search", dreamController.searchDreams);
+router.post("/:id/analyze", dreamController.analyzeDream);
+
+// Then parameterized routes
 router
-  .route('/:id')
+  .route("/:id")
   .get(dreamController.getDreamById)
   .put(dreamController.updateDream)
   .delete(dreamController.deleteDream);
 
-router.route('/search').post(dreamController.searchDreams);
-router.route('/:id/analyze').post(dreamController.analyzeDream);
+// Finally the root route
+router
+  .route("/")
+  .get(dreamController.getDreams)
+  .post(dreamController.createDream);
 
 module.exports = router;

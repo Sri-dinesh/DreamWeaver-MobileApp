@@ -1,17 +1,70 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
+import { fetchAllStats, Stats } from '@/services/statsService';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [daysActive, setDaysActive] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch stats from our statsService
+        const fetchedStats = await fetchAllStats();
+        setStats(fetchedStats);
+
+        // Fetch days active (either add to statsService or calculate here)
+        // For now, we'll just simulate it with a random number between 1-60
+        setDaysActive(Math.floor(Math.random() * 60) + 1);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+        // Set default values on error
+        setStats({
+          dreamCount: 0,
+          lucidDreamCount: 0,
+          avgSleep: '0h',
+        });
+        setDaysActive(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  // Create profile stats array based on our fetched data
   const profileStats = [
-    { label: 'Dreams Logged', value: '47' },
-    { label: 'Lucid Dreams', value: '12' },
-    { label: 'Days Active', value: '90' },
-    { label: 'Avg Sleep', value: '7.2h' },
+    {
+      label: 'Dreams Logged',
+      value: stats ? stats.dreamCount.toString() : '0',
+    },
+    {
+      label: 'Lucid Dreams',
+      value: stats ? stats.lucidDreamCount.toString() : '0',
+    },
+    {
+      label: 'Days Active',
+      value: daysActive.toString(),
+    },
+    {
+      label: 'Avg Sleep',
+      value: stats ? stats.avgSleep : '0h',
+    },
   ];
 
   const menuItems = [
@@ -53,10 +106,18 @@ export default function ProfileScreen() {
     },
   ];
 
-  const handleLogout = () => {
-    logout();
-    router.replace('/');
+  const handleLogout = async () => {
+    await logout();
+    // No need to navigate here as logout already navigates
   };
+
+  if (!user) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#7C3AED" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -81,23 +142,27 @@ export default function ProfileScreen() {
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {user?.name?.charAt(0) || 'U'}
+                {user?.username?.charAt(0)?.toUpperCase() || 'U'}
               </Text>
             </View>
           </View>
-          
-          <Text style={styles.userName}>{user?.name || 'Dream Explorer'}</Text>
-          <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
-          
-          <Text style={styles.userBio}>Passionate lucid dreamer exploring the depths of consciousness</Text>
-          
+
+          <Text style={styles.userName}>{user.username}</Text>
+          <Text style={styles.userEmail}>{user.email}</Text>
+
+          <Text style={styles.userBio}>{user.bio || 'No bio added yet'}</Text>
+
           <View style={styles.statsContainer}>
-            {profileStats.map((stat, index) => (
-              <View key={index} style={styles.statItem}>
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
-              </View>
-            ))}
+            {loading ? (
+              <ActivityIndicator size="small" color="#7C3AED" />
+            ) : (
+              profileStats.map((stat, index) => (
+                <View key={index} style={styles.statItem}>
+                  <Text style={styles.statValue}>{stat.value}</Text>
+                  <Text style={styles.statLabel}>{stat.label}</Text>
+                </View>
+              ))
+            )}
           </View>
         </View>
 
@@ -120,10 +185,7 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-        >
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={20} color="#EF4444" />
           <Text style={styles.logoutButtonText}>Sign Out</Text>
         </TouchableOpacity>
@@ -288,5 +350,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
   },
 });

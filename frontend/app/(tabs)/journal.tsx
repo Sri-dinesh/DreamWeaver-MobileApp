@@ -1,164 +1,792 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, RefreshControl } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  Modal,
+} from 'react-native';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { DreamEntry } from '@/types';
+import axios from 'axios';
 
-const mockDreams: DreamEntry[] = [
-  {
-    id: '1',
-    title: 'Flying Over Mountains',
-    content: 'I was soaring above snow-capped mountains, feeling completely free...',
-    tags: ['flying', 'mountains', 'freedom'],
-    emotions: ['joy', 'excitement'],
-    lucid: true,
-    date: '2024-01-15',
-    userId: '1',
-  },
-  {
-    id: '2',
-    title: 'Lost in a Library',
-    content: 'Endless shelves of books, searching for something important...',
-    tags: ['library', 'searching', 'books'],
-    emotions: ['curiosity', 'confusion'],
-    lucid: false,
-    date: '2024-01-14',
-    userId: '1',
-  },
+const emotions = [
+  { id: 'happy', name: 'Happy' },
+  { id: 'sad', name: 'Sad' },
+  { id: 'anxious', name: 'Anxious' },
+  { id: 'neutral', name: 'Neutral' },
+  { id: 'calm', name: 'Calm' },
+  { id: 'excited', name: 'Excited' },
+  { id: 'others', name: 'Others' },
 ];
 
-export default function JournalScreen() {
-  const [dreams, setDreams] = useState<DreamEntry[]>(mockDreams);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
+const visibilityOptions = [
+  { id: 'private', name: 'Private (only Me)' },
+  { id: 'friends', name: 'Friends only' },
+  { id: 'public', name: 'Public' },
+];
 
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+const lucidOptions = [
+  { id: 'all', name: 'All' },
+  { id: 'yes', name: 'Yes' },
+  { id: 'no', name: 'No' },
+];
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
+interface Dream {
+  id: string;
+  content: string;
+  emotion?: string;
+  is_lucid?: boolean;
+  visibility?: string;
+  tags?: { name: string }[];
+  timestamp: string;
+  ai_analysis?: string | null;
+}
+
+export default function DreamJournalScreen() {
+  const [activeTab, setActiveTab] = useState('record');
+
+  // Record dream states
+  const [dreamContent, setDreamContent] = useState('');
+  const [primaryEmotion, setPrimaryEmotion] = useState('neutral');
+  const [tags, setTags] = useState('');
+  const [isLucid, setIsLucid] = useState(false);
+  const [visibility, setVisibility] = useState('private');
+
+  // Search & filter states
+  const [searchContent, setSearchContent] = useState('');
+  const [filterTags, setFilterTags] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [lucidFilter, setLucidFilter] = useState('all');
+
+  const [dreams, setDreams] = useState<Dream[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [savingDream, setSavingDream] = useState(false);
+  const [analyzingDream, setAnalyzingDream] = useState(false);
+
+  // Analysis states
+  const [dreamAnalysis, setDreamAnalysis] = useState<string | null>(null);
+  const [selectedDream, setSelectedDream] = useState<Dream | null>(null);
+  const [analysisModalVisible, setAnalysisModalVisible] = useState(false);
+
+  useEffect(() => {
+    fetchDreams();
   }, []);
 
-  const filteredDreams = dreams.filter(dream =>
-    dream.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dream.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dream.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const fetchDreams = async () => {
+    setLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) {
+        router.replace('/auth/login');
+        return;
+      }
 
-  return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['rgba(124, 58, 237, 0.1)', 'rgba(168, 85, 247, 0.05)']}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Dream Journal</Text>
-            <Text style={styles.headerSubtitle}>Capture your nocturnal adventures</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => router.push('/dream-editor')}
-          >
-            <LinearGradient
-              colors={['#7C3AED', '#A855F7']}
-              style={styles.addButtonGradient}
-            >
-              <Ionicons name="add" size={24} color="white" />
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
+      const response = await axios.get(`${API_URL}/api/dreams`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      <View style={styles.content}>
-        <View style={styles.searchSection}>
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search dreams, tags, emotions..."
-              placeholderTextColor="#9CA3AF"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-        </View>
+      setDreams(response.data);
+    } catch (error) {
+      console.error('Error fetching dreams:', error);
+      Alert.alert('Error', 'Failed to fetch dreams. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push('/export-journal')}
-          >
-            <Ionicons name="download-outline" size={18} color="#7C3AED" />
-            <Text style={styles.actionButtonText}>Export</Text>
-          </TouchableOpacity>
-        </View>
+  const getToken = async () => {
+    try {
+      return localStorage.getItem('userToken');
+    } catch (error) {
+      console.error('Error getting token:', error);
+      return null;
+    }
+  };
 
-        <ScrollView 
-          style={styles.dreamsList}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+  const handleSaveDream = async () => {
+    if (!dreamContent.trim()) {
+      Alert.alert('Error', 'Please enter dream content');
+      return;
+    }
+
+    setSavingDream(true);
+    try {
+      const token = await getToken();
+      if (!token) {
+        router.replace('/auth/login');
+        return;
+      }
+
+      const tagsArray = tags
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
+
+      const dreamData = {
+        content: dreamContent,
+        emotion: primaryEmotion,
+        is_lucid: isLucid,
+        visibility: visibility,
+        tags: tagsArray,
+      };
+
+      await axios.post(`${API_URL}/api/dreams`, dreamData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      setDreamContent('');
+      setTags('');
+      setIsLucid(false);
+      setPrimaryEmotion('neutral');
+      setVisibility('private');
+
+      Alert.alert('Success', 'Dream saved successfully!');
+      fetchDreams();
+    } catch (error) {
+      console.error('Error saving dream:', error);
+      Alert.alert('Error', 'Failed to save dream. Please try again.');
+    } finally {
+      setSavingDream(false);
+    }
+  };
+
+  const handleAnalyzeWithAI = async () => {
+    if (!dreamContent.trim()) {
+      Alert.alert('Error', 'Please enter dream content first');
+      return;
+    }
+
+    setAnalyzingDream(true);
+    setDreamAnalysis(null); // Clear any previous analysis
+
+    try {
+      const token = await getToken();
+      if (!token) {
+        router.replace('/auth/login');
+        return;
+      }
+
+      const tagsArray = tags
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
+
+      const dreamData = {
+        content: dreamContent,
+        emotion: primaryEmotion,
+        is_lucid: isLucid,
+        visibility: visibility,
+        tags: tagsArray,
+      };
+
+      console.log('Saving dream with data:', dreamData);
+
+      const saveResponse = await axios.post(
+        `${API_URL}/api/dreams`,
+        dreamData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      console.log('Save response:', saveResponse.data);
+
+      const dreamId = saveResponse.data.id;
+
+      if (!dreamId) {
+        console.error('No dream ID returned from save operation');
+        Alert.alert('Error', 'Could not analyze dream - missing dream ID');
+        return;
+      }
+
+      console.log(`Analyzing dream with ID: ${dreamId}`);
+
+      const analysisResponse = await axios.post(
+        `${API_URL}/api/dreams/${dreamId}/analyze`,
+        {}, // Empty object as body
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      console.log('Analysis response:', analysisResponse.data);
+
+      if (analysisResponse.data && analysisResponse.data.analysis) {
+        setDreamAnalysis(analysisResponse.data.analysis);
+
+        setDreamContent('');
+        setTags('');
+        setIsLucid(false);
+        setPrimaryEmotion('neutral');
+        setVisibility('private');
+
+        fetchDreams();
+      } else {
+        setDreamAnalysis('No analysis available. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Analysis error:', error);
+
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+        console.error('Error response status:', error.response.status);
+
+        let errorMessage = 'Server error';
+        if (
+          typeof error.response.data === 'string' &&
+          error.response.data.includes('<pre>')
+        ) {
+          const matches = error.response.data.match(/<pre>(.*?)<\/pre>/s);
+          if (matches && matches[1]) {
+            errorMessage = matches[1].split('<br>')[0];
           }
-        >
-          {filteredDreams.map((dream) => (
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+
+        setDreamAnalysis(`Analysis failed: ${errorMessage}`);
+      } else if (error.request) {
+        console.error('Error request:', error.request);
+        setDreamAnalysis('Network error. Could not connect to the server.');
+      } else {
+        setDreamAnalysis(`Analysis failed: ${error.message}`);
+      }
+    } finally {
+      setAnalyzingDream(false);
+    }
+  };
+
+  const handleViewAnalysis = (dream: Dream) => {
+    setSelectedDream(dream);
+
+    if (dream.ai_analysis) {
+      setDreamAnalysis(dream.ai_analysis);
+      setAnalysisModalVisible(true);
+    } else {
+      generateAnalysisForDream(dream);
+    }
+  };
+
+  const generateAnalysisForDream = async (dream: Dream) => {
+    setAnalyzingDream(true);
+    setDreamAnalysis(null);
+
+    try {
+      const token = await getToken();
+      if (!token) {
+        router.replace('/auth/login');
+        return;
+      }
+
+      console.log(`Generating analysis for dream ID: ${dream.id}`);
+
+      const analysisResponse = await axios.post(
+        `${API_URL}/api/dreams/${dream.id}/analyze`,
+        {}, // Empty object as body
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (analysisResponse.data && analysisResponse.data.analysis) {
+        setDreamAnalysis(analysisResponse.data.analysis);
+        setAnalysisModalVisible(true);
+
+        fetchDreams();
+      } else {
+        Alert.alert('Error', 'Failed to generate analysis.');
+      }
+    } catch (error: any) {
+      console.error('Error generating analysis:', error);
+      Alert.alert('Error', 'Failed to generate analysis. Please try again.');
+    } finally {
+      setAnalyzingDream(false);
+    }
+  };
+
+  const handleApplyFilters = async () => {
+    setLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) {
+        router.replace('/auth/login');
+        return;
+      }
+
+      const tagsArray = filterTags
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
+
+      const searchData = {
+        content: searchContent || undefined,
+        tags: tagsArray.length > 0 ? tagsArray : undefined,
+        fromDate: fromDate || undefined,
+        toDate: toDate || undefined,
+        isLucid:
+          lucidFilter === 'yes'
+            ? true
+            : lucidFilter === 'no'
+            ? false
+            : undefined,
+      };
+
+      const response = await axios.post(
+        `${API_URL}/api/dreams/search`,
+        searchData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      setDreams(response.data);
+    } catch (error) {
+      console.error('Search error:', error);
+      Alert.alert('Error', 'Failed to search dreams. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  interface FormatDateOptions {
+    year: 'numeric';
+    month: 'short';
+    day: 'numeric';
+  }
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    } as FormatDateOptions);
+  };
+
+  const renderAnalysisModal = () => (
+    <Modal
+      visible={analysisModalVisible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setAnalysisModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Dream Analysis</Text>
             <TouchableOpacity
-              key={dream.id}
-              style={styles.dreamCard}
-              onPress={() => router.push(`/dream-detail/${dream.id}` as any)}
+              onPress={() => setAnalysisModalVisible(false)}
+              style={styles.modalCloseButton}
             >
-              <LinearGradient
-                colors={dream.lucid ? ['rgba(16, 185, 129, 0.1)', 'rgba(16, 185, 129, 0.05)'] : ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 1)']}
-                style={styles.dreamCardGradient}
-              >
-                <View style={styles.dreamHeader}>
-                  <View style={styles.dreamTitleContainer}>
-                    <Text style={styles.dreamTitle}>{dream.title}</Text>
-                    {dream.lucid && (
-                      <View style={styles.lucidBadge}>
-                        <Ionicons name="flash" size={12} color="white" />
-                        <Text style={styles.lucidBadgeText}>Lucid</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={styles.dreamDate}>
-                    {new Date(dream.date).toLocaleDateString()}
-                  </Text>
-                </View>
-                
-                <Text style={styles.dreamContent} numberOfLines={2}>
-                  {dream.content}
-                </Text>
-                
-                <View style={styles.dreamFooter}>
-                  <View style={styles.dreamTags}>
-                    {dream.tags.slice(0, 3).map((tag, index) => (
-                      <View key={index} style={styles.tag}>
-                        <Text style={styles.tagText}>#{tag}</Text>
-                      </View>
-                    ))}
-                    {dream.tags.length > 3 && (
-                      <Text style={styles.moreTagsText}>+{dream.tags.length - 3}</Text>
-                    )}
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                </View>
-              </LinearGradient>
+              <Ionicons name="close" size={24} color="#1F2937" />
             </TouchableOpacity>
-          ))}
-          
-          {filteredDreams.length === 0 && (
-            <View style={styles.emptyState}>
-              <Ionicons name="moon-outline" size={64} color="#D1D5DB" />
-              <Text style={styles.emptyStateTitle}>No dreams found</Text>
-              <Text style={styles.emptyStateText}>
-                {searchQuery ? 'Try adjusting your search terms' : 'Start by recording your first dream'}
+          </View>
+
+          {selectedDream && (
+            <View style={styles.modalDreamSummary}>
+              <Text style={styles.modalDreamDate}>
+                {formatDate(selectedDream.timestamp)}
+              </Text>
+              <Text style={styles.modalDreamContent} numberOfLines={2}>
+                {selectedDream.content}
               </Text>
             </View>
           )}
-        </ScrollView>
+
+          <ScrollView style={styles.modalAnalysisContainer}>
+            {dreamAnalysis ? (
+              <Text style={styles.modalAnalysisText}>{dreamAnalysis}</Text>
+            ) : (
+              <ActivityIndicator color="#7C3AED" size="large" />
+            )}
+          </ScrollView>
+        </View>
       </View>
+    </Modal>
+  );
+
+  const renderRecordTab = () => (
+    <ScrollView style={styles.tabContent}>
+      <Text style={styles.sectionTitle}>Record New Dream</Text>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Dream Content</Text>
+        <TextInput
+          style={styles.textArea}
+          placeholder="Describe your dream in detail..."
+          placeholderTextColor="#9CA3AF"
+          multiline
+          value={dreamContent}
+          onChangeText={setDreamContent}
+          textAlignVertical="top"
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Primary Emotion</Text>
+        <View style={styles.multiChoiceContainer}>
+          {emotions.map((emotion) => (
+            <TouchableOpacity
+              key={emotion.id}
+              style={[
+                styles.choiceButton,
+                primaryEmotion === emotion.id && styles.choiceButtonActive,
+              ]}
+              onPress={() => setPrimaryEmotion(emotion.id)}
+            >
+              <Text
+                style={[
+                  styles.choiceButtonText,
+                  primaryEmotion === emotion.id &&
+                    styles.choiceButtonTextActive,
+                ]}
+              >
+                {emotion.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Tags</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="flying, water, people (comma separated)"
+          placeholderTextColor="#9CA3AF"
+          value={tags}
+          onChangeText={setTags}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Lucid Dream?</Text>
+        <TouchableOpacity
+          style={styles.checkboxContainer}
+          onPress={() => setIsLucid(!isLucid)}
+        >
+          <View style={[styles.checkbox, isLucid && styles.checkboxActive]}>
+            {isLucid && <Ionicons name="checkmark" size={16} color="white" />}
+          </View>
+          <Text style={styles.checkboxLabel}>Yes, this was a lucid dream</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Visibility</Text>
+        <View style={styles.multiChoiceContainer}>
+          {visibilityOptions.map((option) => (
+            <TouchableOpacity
+              key={option.id}
+              style={[
+                styles.choiceButton,
+                visibility === option.id && styles.choiceButtonActive,
+              ]}
+              onPress={() => setVisibility(option.id)}
+            >
+              <Text
+                style={[
+                  styles.choiceButtonText,
+                  visibility === option.id && styles.choiceButtonTextActive,
+                ]}
+              >
+                {option.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[
+            styles.primaryButton,
+            (!dreamContent.trim() || savingDream) && styles.buttonDisabled,
+          ]}
+          onPress={handleSaveDream}
+          disabled={!dreamContent.trim() || savingDream}
+        >
+          {savingDream ? (
+            <ActivityIndicator color="white" size="small" />
+          ) : (
+            <Text style={styles.primaryButtonText}>Save Dream</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.secondaryButton,
+            (!dreamContent.trim() || analyzingDream) && styles.buttonDisabled,
+          ]}
+          onPress={handleAnalyzeWithAI}
+          disabled={!dreamContent.trim() || analyzingDream}
+        >
+          {analyzingDream ? (
+            <ActivityIndicator color="#7C3AED" size="small" />
+          ) : (
+            <>
+              <Ionicons
+                name="sparkles"
+                size={18}
+                color={dreamContent.trim() ? '#7C3AED' : '#9CA3AF'}
+              />
+              <Text
+                style={[
+                  styles.secondaryButtonText,
+                  !dreamContent.trim() && styles.buttonTextDisabled,
+                ]}
+              >
+                Analyze with AI
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {dreamAnalysis !== null && !analysisModalVisible && (
+        <View style={styles.analysisContainer}>
+          <View style={styles.analysisHeader}>
+            <Ionicons name="sparkles" size={20} color="#7C3AED" />
+            <Text style={styles.analysisTitle}>AI Dream Analysis</Text>
+          </View>
+          <Text style={styles.analysisContent}>{dreamAnalysis}</Text>
+
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={() => {
+              setDreamAnalysis(null);
+              setDreamContent('');
+              setTags('');
+              setIsLucid(false);
+              setPrimaryEmotion('neutral');
+              setVisibility('private');
+            }}
+          >
+            <Text style={styles.clearButtonText}>Clear & Start New</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </ScrollView>
+  );
+
+  const renderSearchTab = () => (
+    <ScrollView style={styles.tabContent}>
+      <Text style={styles.sectionTitle}>Search & Filter Dreams</Text>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Search Dream Content</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Search dream content..."
+          placeholderTextColor="#9CA3AF"
+          value={searchContent}
+          onChangeText={setSearchContent}
+        />
+      </View>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Filter by Tags</Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Filter by tags..."
+          placeholderTextColor="#9CA3AF"
+          value={filterTags}
+          onChangeText={setFilterTags}
+        />
+      </View>
+      <View style={styles.dateContainer}>
+        <View style={styles.dateInput}>
+          <Text style={styles.inputLabel}>From Date</Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor="#9CA3AF"
+            value={fromDate}
+            onChangeText={setFromDate}
+          />
+        </View>
+        <View style={styles.dateInput}>
+          <Text style={styles.inputLabel}>To Date</Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor="#9CA3AF"
+            value={toDate}
+            onChangeText={setToDate}
+          />
+        </View>
+      </View>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Lucid Dream</Text>
+        <View style={styles.multiChoiceContainer}>
+          {lucidOptions.map((option) => (
+            <TouchableOpacity
+              key={option.id}
+              style={[
+                styles.choiceButton,
+                lucidFilter === option.id && styles.choiceButtonActive,
+              ]}
+              onPress={() => setLucidFilter(option.id)}
+            >
+              <Text
+                style={[
+                  styles.choiceButtonText,
+                  lucidFilter === option.id && styles.choiceButtonTextActive,
+                ]}
+              >
+                {option.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+      <TouchableOpacity
+        style={[styles.primaryButton, loading && styles.buttonDisabled]}
+        onPress={handleApplyFilters}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="white" size="small" />
+        ) : (
+          <Text style={styles.primaryButtonText}>Apply Filters</Text>
+        )}
+      </TouchableOpacity>
+      <View style={styles.resultsSection}>
+        <Text style={styles.subsectionTitle}>Search Results</Text>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color="#7C3AED" size="large" />
+            <Text style={styles.loadingText}>Loading dreams...</Text>
+          </View>
+        ) : dreams.length > 0 ? (
+          dreams.map((dream) => (
+            <View key={dream.id} style={styles.dreamCard}>
+              <View style={styles.dreamHeader}>
+                <Text style={styles.dreamDate}>
+                  {formatDate(dream.timestamp)}
+                </Text>
+                {dream.is_lucid && (
+                  <View style={styles.lucidBadge}>
+                    <Text style={styles.lucidBadgeText}>Lucid</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.dreamContent} numberOfLines={2}>
+                {dream.content}
+              </Text>
+              <View style={styles.dreamMeta}>
+                <Text style={styles.dreamEmotion}>
+                  Emotion: {dream.emotion || 'Not specified'}
+                </Text>
+                <Text style={styles.dreamTags}>
+                  Tags:{' '}
+                  {dream.tags?.map((tag) => tag.name).join(', ') || 'None'}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.analysisButton}
+                onPress={() => handleViewAnalysis(dream)}
+                disabled={analyzingDream}
+              >
+                {analyzingDream && selectedDream?.id === dream.id ? (
+                  <ActivityIndicator size="small" color="#7C3AED" />
+                ) : (
+                  <>
+                    <Ionicons
+                      name="sparkles-outline"
+                      size={16}
+                      color="#7C3AED"
+                    />
+                    <Text style={styles.analysisButtonText}>
+                      {dream.ai_analysis
+                        ? 'View Analysis'
+                        : 'Generate Analysis'}{' '}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <Ionicons name="cloud-offline" size={48} color="#9CA3AF" />
+            <Text style={styles.emptyStateText}>No dreams found</Text>
+            <Text style={styles.emptyStateSubtext}>
+              Record your dreams or adjust your search criteria
+            </Text>
+          </View>
+        )}
+      </View>
+    </ScrollView>
+  );
+
+  const tabs = [
+    { id: 'record', name: 'Record Dream' },
+    { id: 'search', name: 'Search & Filter' },
+  ];
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Dream Journal</Text>
+        <View style={styles.placeholder} />
+      </View>
+
+      <View style={styles.tabsContainer}>
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab.id}
+            style={[styles.tab, activeTab === tab.id && styles.activeTab]}
+            onPress={() => setActiveTab(tab.id)}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === tab.id && styles.activeTabText,
+              ]}
+            >
+              {tab.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.content}>
+        {activeTab === 'record' ? renderRecordTab() : renderSearchTab()}
+      </View>
+
+      {/* Analysis Modal */}
+      {renderAnalysisModal()}
     </View>
   );
 }
@@ -166,207 +794,381 @@ export default function JournalScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFBFC',
-  },
-  headerGradient: {
-    paddingTop: 50,
+    backgroundColor: '#F9FAFB',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    paddingTop: 10,
+    padding: 24,
+    paddingTop: 60,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
-  headerContent: {
-    flex: 1,
+  backButton: {
+    padding: 4,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#4C1D95',
-    marginBottom: 4,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
   },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-    fontWeight: '500',
+  placeholder: {
+    width: 32,
   },
-  addButton: {
-    borderRadius: 24,
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
-  addButtonGradient: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
+  tab: {
+    flex: 1,
+    paddingVertical: 16,
     alignItems: 'center',
+  },
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#7C3AED',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  activeTabText: {
+    color: '#7C3AED',
   },
   content: {
     flex: 1,
   },
-  searchSection: {
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    paddingBottom: 16,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 6,
-    paddingHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  searchIcon: {
-    marginRight: 12,
-  },
-  searchInput: {
+  tabContent: {
     flex: 1,
-    height: 50,
+    padding: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 20,
+  },
+  subsectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  textInput: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 16,
     color: '#1F2937',
   },
-  actionsContainer: {
-    flexDirection: 'row',
+  textArea: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     paddingHorizontal: 16,
-    marginBottom: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#1F2937',
+    minHeight: 120,
+    textAlignVertical: 'top',
   },
-  actionButton: {
+  multiChoiceContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  choiceButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: 'white',
+  },
+  choiceButtonActive: {
+    borderColor: '#7C3AED',
+    backgroundColor: '#7C3AED',
+  },
+  choiceButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  choiceButtonTextActive: {
+    color: 'white',
+  },
+  checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    gap: 6,
+    gap: 12,
   },
-  actionButtonText: {
-    color: '#6B7280',
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxActive: {
+    borderColor: '#7C3AED',
+    backgroundColor: '#7C3AED',
+  },
+  checkboxLabel: {
     fontSize: 14,
+    color: '#1F2937',
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  dateInput: {
+    flex: 1,
+  },
+  buttonContainer: {
+    gap: 12,
+    marginTop: 8,
+  },
+  primaryButton: {
+    backgroundColor: '#7C3AED',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: 'white',
+    fontSize: 16,
     fontWeight: '600',
   },
-  dreamsList: {
-    flex: 1,
-    paddingHorizontal: 16,
+  secondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#7C3AED',
+    gap: 8,
+  },
+  secondaryButtonText: {
+    color: '#7C3AED',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonTextDisabled: {
+    color: '#9CA3AF',
+  },
+  resultsSection: {
+    marginTop: 24,
   },
   dreamCard: {
-    marginBottom: 16,
-    borderRadius: 6,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  dreamCardGradient: {
-    borderRadius: 6,
-    padding: 24,
+    shadowRadius: 4,
+    elevation: 3,
   },
   dreamHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  dreamTitleContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    marginRight: 16,
-  },
-  dreamTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginRight: 12,
-    lineHeight: 26,
-  },
-  lucidBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#10B981',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    gap: 4,
-  },
-  lucidBadgeText: {
-    color: 'white',
-    fontSize: 11,
-    fontWeight: '600',
+    marginBottom: 8,
   },
   dreamDate: {
     fontSize: 12,
-    color: '#9CA3AF',
-    fontWeight: '500',
+    color: '#6B7280',
+  },
+  lucidBadge: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  lucidBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
   },
   dreamContent: {
-    fontSize: 16,
-    color: '#374151',
-    lineHeight: 24,
-    marginBottom: 20,
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 18,
+    marginBottom: 8,
   },
-  dreamFooter: {
+  dreamMeta: {
+    gap: 4,
+    marginBottom: 12,
+  },
+  dreamEmotion: {
+    fontSize: 12,
+    color: '#6B7280',
+    textTransform: 'capitalize',
+  },
+  dreamTags: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyStateText: {
+    marginTop: 12,
+    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyStateSubtext: {
+    marginTop: 4,
+    color: '#6B7280',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  analysisContainer: {
+    marginTop: 24,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  analysisHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  analysisTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginLeft: 8,
+  },
+  analysisContent: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  clearButton: {
+    backgroundColor: '#7C3AED',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  clearButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  analysisButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    gap: 6,
+  },
+  analysisButtonText: {
+    color: '#7C3AED',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 16,
   },
-  dreamTags: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  tag: {
-    backgroundColor: 'rgba(124, 58, 237, 0.1)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  tagText: {
-    fontSize: 13,
-    color: '#7C3AED',
+  modalTitle: {
+    fontSize: 18,
     fontWeight: '600',
+    color: '#1F2937',
   },
-  moreTagsText: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    fontWeight: '500',
+  modalCloseButton: {
+    padding: 4,
   },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 80,
-    paddingHorizontal: 40,
+  modalDreamSummary: {
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
   },
-  emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#374151',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyStateText: {
-    fontSize: 16,
+  modalDreamDate: {
+    fontSize: 12,
     color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 22,
+    marginBottom: 4,
+  },
+  modalDreamContent: {
+    fontSize: 14,
+    color: '#1F2937',
+  },
+  modalAnalysisContainer: {
+    flex: 1,
+  },
+  modalAnalysisText: {
+    fontSize: 16,
+    color: '#4B5563',
+    lineHeight: 24,
   },
 });

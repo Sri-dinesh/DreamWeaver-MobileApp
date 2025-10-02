@@ -302,13 +302,19 @@ exports.analyzeDream = async (req, res) => {
       return res.status(403).json({ message: "User not authorized" });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     const prompt = `Analyze the following dream and provide insights into its possible meanings, symbols, and emotional themes: "${dream.content}"`;
 
     try {
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const analysis = response.text();
+
+      // Update the dream entry with the analysis - fixed field name
+      await prisma.dreamEntry.update({
+        where: { id: dreamId },
+        data: { ai_analysis: analysis }, // Changed from analysis to ai_analysis
+      });
 
       res.status(200).json({ analysis });
     } catch (aiError) {
@@ -326,7 +332,6 @@ exports.analyzeDream = async (req, res) => {
     });
   }
 };
-
 exports.searchDreams = async (req, res) => {
   const { content, tags, fromDate, toDate, isLucid } = req.body;
 
@@ -394,5 +399,38 @@ exports.searchDreams = async (req, res) => {
     res
       .status(500)
       .json({ message: "Something went wrong", error: error.message });
+  }
+};
+
+// @desc    Get dream stats for a user
+// @route   GET /api/dreams/stats
+// @access  Private
+exports.getDreamStats = async (req, res) => {
+  try {
+    // Get total dreams for user
+    const totalDreams = await prisma.dreamEntry.count({
+      where: {
+        user_id: req.userId,
+      },
+    });
+
+    // Get lucid dreams count
+    const lucidDreams = await prisma.dreamEntry.count({
+      where: {
+        user_id: req.userId,
+        is_lucid: true,
+      },
+    });
+
+    res.status(200).json({
+      totalDreams,
+      lucidDreams,
+    });
+  } catch (error) {
+    console.error("Error fetching dream stats:", error);
+    res.status(500).json({
+      message: "Something went wrong",
+      error: error.message,
+    });
   }
 };

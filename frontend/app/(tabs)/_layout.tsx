@@ -1,13 +1,14 @@
-import { Tabs, router } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Tabs, router, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
-import React from 'react';
 
 export default function TabLayout() {
   const { isAuthenticated } = useAuth();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isAuthenticated) {
+      console.log('Not authenticated, redirecting to landing');
       router.replace('/');
     }
   }, [isAuthenticated]);
@@ -15,28 +16,21 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
         tabBarActiveTintColor: '#7C3AED',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarInactiveTintColor: '#6B7280',
         tabBarStyle: {
           backgroundColor: 'white',
           borderTopColor: '#E5E7EB',
-          height: 90,
-          paddingBottom: 20,
-          paddingTop: 10,
         },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-        },
+        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ size, color }) => (
-            <Ionicons name="home" size={size} color={color} />
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid-outline" size={size} color={color} />
           ),
         }}
       />
@@ -44,8 +38,8 @@ export default function TabLayout() {
         name="journal"
         options={{
           title: 'Journal',
-          tabBarIcon: ({ size, color }) => (
-            <Ionicons name="book" size={size} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="book-outline" size={size} color={color} />
           ),
         }}
       />
@@ -53,17 +47,8 @@ export default function TabLayout() {
         name="analytics"
         options={{
           title: 'Analytics',
-          tabBarIcon: ({ size, color }) => (
-            <Ionicons name="analytics" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="audio"
-        options={{
-          title: 'Audio',
-          tabBarIcon: ({ size, color }) => (
-            <Ionicons name="headset" size={size} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="analytics-outline" size={size} color={color} />
           ),
         }}
       />
@@ -71,11 +56,20 @@ export default function TabLayout() {
         name="community"
         options={{
           title: 'Community',
-          tabBarIcon: ({ size, color }) => (
-            <Ionicons name="people" size={size} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="people-outline" size={size} color={color} />
           ),
         }}
       />
+      {/* Add these to hide other tabs that might exist in your file structure */}
+
+      {/* <Tabs.Screen
+        name="home"
+        options={{ href: null }}
+      />
+      <Tabs.Screen name="audio" options={{ href: null }} />
+      <Tabs.Screen name="tools" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} /> */}
     </Tabs>
   );
 }
