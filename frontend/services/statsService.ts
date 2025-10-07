@@ -12,6 +12,7 @@ export interface DreamStats {
 export interface SleepStats {
   averageSleep: number | null;
   recordsCount: number;
+  daysActive: number;
 }
 
 export interface Stats {
@@ -119,32 +120,17 @@ export const fetchAllStats = async (): Promise<Stats> => {
     // Try to get sleep stats
     try {
       const sleepStats = await fetchSleepStats();
-      if (sleepStats && sleepStats.averageSleep !== null) {
-        stats.avgSleep = `${sleepStats.averageSleep.toFixed(1)}h`;
-      } else {
-        stats.avgSleep = '7.5h'; // Default placeholder
+      if (sleepStats) {
+        if (sleepStats.averageSleep !== null) {
+          stats.avgSleep = `${sleepStats.averageSleep.toFixed(1)}h`;
+        } else {
+          stats.avgSleep = '0h';
+        }
+        stats.daysActive = sleepStats.daysActive || 0;
       }
     } catch (error) {
       console.error('Error in sleep stats:', error);
-      stats.avgSleep = '7.5h'; // Default placeholder
-    }
-
-    // Try to get days active (you would need to implement this API endpoint)
-    try {
-      const token = await getToken();
-      if (token) {
-        const response = await axios.get(`${API_URL}/api/users/activity`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        stats.daysActive = response.data.daysActive || 0;
-      }
-    } catch (error) {
-      console.error('Error fetching days active:', error);
-      // Calculate a random number between 1-60 as a placeholder
-      stats.daysActive = Math.floor(Math.random() * 60) + 1;
+      stats.avgSleep = '0h';
     }
 
     return stats;

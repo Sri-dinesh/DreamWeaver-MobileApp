@@ -15,7 +15,6 @@ import { fetchAllStats, Stats } from '@/services/statsService';
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
-  const [daysActive, setDaysActive] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,10 +25,6 @@ export default function ProfileScreen() {
         // Fetch stats from our statsService
         const fetchedStats = await fetchAllStats();
         setStats(fetchedStats);
-
-        // Fetch days active (either add to statsService or calculate here)
-        // For now, we'll just simulate it with a random number between 1-60
-        setDaysActive(Math.floor(Math.random() * 60) + 1);
       } catch (error) {
         console.error('Error fetching stats:', error);
         // Set default values on error
@@ -37,8 +32,8 @@ export default function ProfileScreen() {
           dreamCount: 0,
           lucidDreamCount: 0,
           avgSleep: '0h',
+          daysActive: 0,
         });
-        setDaysActive(0);
       } finally {
         setLoading(false);
       }
@@ -59,7 +54,7 @@ export default function ProfileScreen() {
     },
     {
       label: 'Days Active',
-      value: daysActive.toString(),
+      value: stats && stats.daysActive ? stats.daysActive.toString() : '0',
     },
     {
       label: 'Avg Sleep',
