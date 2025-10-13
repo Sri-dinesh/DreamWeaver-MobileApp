@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.101:8080';
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export interface SleepPlan {
   id?: number;
@@ -54,7 +54,9 @@ export const getSleepPlans = async (): Promise<SleepPlan[]> => {
 export const getSleepPlanByDate = async (date: string): Promise<SleepPlan> => {
   try {
     const headers = await getAuthHeaders();
-    const response = await axios.get(`${API_URL}/api/sleep/plans/${date}`, { headers });
+    const response = await axios.get(`${API_URL}/api/sleep/plans/${date}`, {
+      headers,
+    });
     return response.data;
   } catch (error) {
     console.error(`Error fetching sleep plan for date ${date}:`, error);
@@ -63,10 +65,14 @@ export const getSleepPlanByDate = async (date: string): Promise<SleepPlan> => {
 };
 
 // Create or update a sleep plan
-export const createOrUpdateSleepPlan = async (plan: SleepPlan): Promise<SleepPlan> => {
+export const createOrUpdateSleepPlan = async (
+  plan: SleepPlan
+): Promise<SleepPlan> => {
   try {
     const headers = await getAuthHeaders();
-    const response = await axios.post(`${API_URL}/api/sleep/plans`, plan, { headers });
+    const response = await axios.post(`${API_URL}/api/sleep/plans`, plan, {
+      headers,
+    });
     return response.data;
   } catch (error) {
     console.error('Error creating/updating sleep plan:', error);
@@ -86,11 +92,14 @@ export const deleteSleepPlan = async (id: number): Promise<void> => {
 };
 
 // Generate a sleep ritual using AI
-export const generateSleepRitual = async (goal: string, planDate?: string): Promise<string> => {
+export const generateSleepRitual = async (
+  goal: string,
+  planDate?: string
+): Promise<string> => {
   try {
     const headers = await getAuthHeaders();
     const payload = planDate ? { goal, plan_date: planDate } : { goal };
-    
+
     const response = await axios.post(
       `${API_URL}/api/sleep/generate-ritual`,
       payload,
@@ -112,10 +121,12 @@ export interface SleepPlanSearchParams {
   sortOrder?: 'asc' | 'desc';
 }
 
-export const searchSleepPlans = async (params: SleepPlanSearchParams): Promise<SleepPlan[]> => {
+export const searchSleepPlans = async (
+  params: SleepPlanSearchParams
+): Promise<SleepPlan[]> => {
   try {
     const headers = await getAuthHeaders();
-    
+
     // Build query string from parameters
     const queryParams = new URLSearchParams();
     if (params.query) queryParams.append('query', params.query);
@@ -123,7 +134,7 @@ export const searchSleepPlans = async (params: SleepPlanSearchParams): Promise<S
     if (params.endDate) queryParams.append('endDate', params.endDate);
     if (params.sortBy) queryParams.append('sortBy', params.sortBy);
     if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-    
+
     const url = `${API_URL}/api/sleep/search?${queryParams.toString()}`;
     const response = await axios.get(url, { headers });
     return response.data;
