@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  Modal,
-} from 'react-native';
-import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 const emotions = [
   { id: 'happy', name: 'Happy' },
@@ -683,7 +683,12 @@ export default function DreamJournalScreen() {
           </View>
         ) : dreams.length > 0 ? (
           dreams.map((dream) => (
-            <View key={dream.id} style={styles.dreamCard}>
+            <TouchableOpacity
+              key={dream.id}
+              style={styles.dreamCard}
+              activeOpacity={0.8}
+              onPress={() => router.push(`/dream-detail/${dream.id}`)}
+            >
               <View style={styles.dreamHeader}>
                 <Text style={styles.dreamDate}>
                   {formatDate(dream.timestamp)}
@@ -709,7 +714,10 @@ export default function DreamJournalScreen() {
 
               <TouchableOpacity
                 style={styles.analysisButton}
-                onPress={() => handleViewAnalysis(dream)}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleViewAnalysis(dream);
+                }}
                 disabled={analyzingDream}
               >
                 {analyzingDream && selectedDream?.id === dream.id ? (
@@ -729,7 +737,7 @@ export default function DreamJournalScreen() {
                   </>
                 )}
               </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           ))
         ) : (
           <View style={styles.emptyState}>
@@ -867,6 +875,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1F2937',
     marginBottom: 8,
+    marginTop: 4,
   },
   textInput: {
     backgroundColor: 'white',
@@ -1115,7 +1124,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

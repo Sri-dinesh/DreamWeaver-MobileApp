@@ -1,36 +1,96 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  GestureResponderEvent,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-// Mock dream data - in a real app, this would come from your database
-const mockDream = {
-  id: '1',
-  title: 'Flying Over Mountains',
-  content: 'I was soaring above snow-capped mountains, feeling completely free and weightless. The wind carried me higher and higher, and I could see the entire world spread out below me like a beautiful tapestry. The sensation of flight was so vivid and real - I could feel the cool mountain air against my skin and the exhilarating rush of moving through the clouds. As I flew, I encountered other dreamers who were also exploring this aerial realm, and we danced together in the sky, creating patterns of light and color that painted the heavens.',
-  tags: ['flying', 'mountains', 'freedom', 'adventure'],
-  emotions: ['joy', 'excitement', 'wonder'],
-  lucid: true,
-  date: '2024-01-15',
-  visibility: 'public',
-  likes: 24,
-  comments: 8,
-};
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-const emotionColors = {
-  joy: '#10B981',
-  excitement: '#EF4444',
-  wonder: '#8B5CF6',
-  fear: '#F59E0B',
-  sadness: '#6B7280',
-  curiosity: '#3B82F6',
+interface Tag {
+  id: string;
+  name: string;
+}
+
+interface Dream {
+  id: string;
+  title?: string;
+  content: string;
+  emotion?: string;
+  tags?: Tag[];
+  lucid: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  date?: string;
+  visibility: 'private' | 'public' | 'friends';
+  likes: number;
+  comments: number;
+  ai_analysis?: string | null;
+  isLiked?: boolean;
+  isSaved?: boolean;
+}
+
+const EMOTION_NAMES: Record<string, string> = {
+  happy: 'Happy',
+  sad: 'Sad',
+  anxious: 'Anxious',
+  neutral: 'Neutral',
+  calm: 'Calm',
+  excited: 'Excited',
+  others: 'Others',
 };
 
 export default function DreamDetailScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const [dream, setDream] = useState<Dream | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [showAiAnalysis, setShowAiAnalysis] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      fetchDreamDetail();
+    }
+  }, [id]);
+
+  const getToken = async () => {
+    try {
+      return localStorage.getItem('userToken');
+    } catch (error) {
+      console.error('Error getting token:', error);
+      return null;
+    }
+  };
+
+  const fetchDreamDetail = async () => {
+    setLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) {
+        router.replace('/auth/login');
+        return;
+      }
+      const response = await axios.get(`${API_URL}/api/dreams/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDream(response.data);
+    } catch (error) {
+      console.error('Error fetching dream:', error);
+      Alert.alert('Error', 'Failed to fetch dream details. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEdit = () => {
     router.push('/dream-editor');
@@ -42,14 +102,16 @@ export default function DreamDetailScreen() {
       'Are you sure you want to delete this dream? This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            Alert.alert('Dream Deleted', 'Your dream has been removed from your journal.', [
-              { text: 'OK', onPress: () => router.back() }
-            ]);
-          }
+            Alert.alert(
+              'Dream Deleted',
+              'Your dream has been removed from your journal.',
+              [{ text: 'OK', onPress: () => router.back() }]
+            );
+          },
         },
       ]
     );
@@ -60,22 +122,109 @@ export default function DreamDetailScreen() {
   };
 
   const handleAnalyze = () => {
-    Alert.alert(
-      'AI Dream Analysis 🔮',
-      'This dream reveals themes of liberation and transcendence. Flying often represents a desire to break free from limitations and gain a new perspective on life. The mountain setting suggests you\'re overcoming challenges and reaching new heights in your personal growth.',
-      [{ text: 'Fascinating!' }]
-    );
+    if (dream?.ai_analysis) {
+      setShowAiAnalysis(true);
+    } else {
+      Alert.alert(
+        'AI Dream Analysis',
+        'No analysis available for this dream yet.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   };
+
+  const isShareable = (visibility: string) =>
+    visibility === 'public' || visibility === 'friends';
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#7C3AED" />
+      </View>
+    );
+  }
+
+  if (!dream) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>Dream not found</Text>
+      </View>
+    );
+  }
+
+  async function handleGenerateAnalysis(
+    event: GestureResponderEvent
+  ): Promise<void> {
+    event?.stopPropagation?.();
+
+    if (!id) {
+      Alert.alert('Error', 'No dream ID available.');
+      return;
+    }
+
+    if (!dream) {
+      Alert.alert('Error', 'Dream not loaded yet.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const token = await getToken();
+      if (!token) {
+        router.replace('/auth/login');
+        return;
+      }
+
+      const response = await axios.post(
+        `${API_URL}/api/dreams/${id}/analyze`,
+        { content: dream.content },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const ai_analysis =
+        response.data?.ai_analysis ?? response.data?.analysis ?? null;
+
+      if (!ai_analysis) {
+        Alert.alert('No Analysis', 'The AI did not return an analysis.');
+        return;
+      }
+
+      setDream((prev) => (prev ? { ...prev, ai_analysis } : prev));
+      Alert.alert(
+        'AI Analysis Generated',
+        'A new AI analysis has been added to this dream.'
+      );
+    } catch (error) {
+      console.error('Error generating AI analysis:', error);
+      Alert.alert('Error', 'Failed to generate AI analysis. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  let displayEmotion = '';
+  if (typeof dream.emotion === 'string') {
+    displayEmotion = EMOTION_NAMES[dream.emotion] || dream.emotion;
+  } else if (
+    Array.isArray(dream.emotion) &&
+    (dream.emotion as unknown[]).length > 0 &&
+    typeof (dream.emotion as unknown[])[0] === 'string'
+  ) {
+    const firstEmotion = (dream.emotion as string[])[0];
+    displayEmotion = EMOTION_NAMES[firstEmotion] || firstEmotion;
+  }
+
+  const tagsToDisplay = Array.isArray(dream.tags) ? dream.tags : [];
 
   return (
     <View style={styles.container}>
@@ -91,10 +240,7 @@ export default function DreamDetailScreen() {
             <Ionicons name="arrow-back" size={24} color="#4C1D95" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Dream Details</Text>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={handleEdit}
-          >
+          <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
             <Ionicons name="create-outline" size={24} color="#4C1D95" />
           </TouchableOpacity>
         </View>
@@ -104,138 +250,192 @@ export default function DreamDetailScreen() {
         <View style={styles.dreamCard}>
           <View style={styles.dreamHeader}>
             <View style={styles.titleSection}>
-              <Text style={styles.dreamTitle}>{mockDream.title}</Text>
-              <Text style={styles.dreamDate}>{formatDate(mockDream.date)}</Text>
-            </View>
-            {mockDream.lucid && (
-              <View style={styles.lucidBadge}>
-                <Ionicons name="flash" size={16} color="white" />
-                <Text style={styles.lucidBadgeText}>Lucid</Text>
+              <View style={styles.dateContainer}>
+                <Text style={styles.dreamDate}>
+                  {formatDate(
+                    dream.date ||
+                      dream.createdAt ||
+                      dream.updatedAt ||
+                      new Date().toISOString()
+                  )}
+                </Text>
+
+                <View
+                  style={[
+                    styles.visibilityBadge,
+                    {
+                      backgroundColor:
+                        dream.visibility === 'private'
+                          ? '#6B7280'
+                          : dream.visibility === 'friends'
+                          ? '#3B82F6'
+                          : '#10B981',
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={
+                      dream.visibility === 'private'
+                        ? 'lock-closed'
+                        : dream.visibility === 'friends'
+                        ? 'people'
+                        : 'globe'
+                    }
+                    size={12}
+                    color="white"
+                  />
+                  <Text style={styles.visibilityText}>
+                    {dream.visibility.charAt(0).toUpperCase() +
+                      dream.visibility.slice(1)}
+                  </Text>
+                </View>
               </View>
-            )}
+              {dream.lucid && (
+                <View style={styles.lucidBadge}>
+                  <Ionicons name="flash" size={16} color="white" />
+                  <Text style={styles.lucidBadgeText}>Lucid</Text>
+                </View>
+              )}
+            </View>
           </View>
 
-          <Text style={styles.dreamContent}>{mockDream.content}</Text>
+          <Text style={styles.dreamContent}>{dream.content}</Text>
 
           <View style={styles.metaSection}>
             <View style={styles.emotionsSection}>
               <Text style={styles.metaTitle}>Emotions</Text>
               <View style={styles.emotionsList}>
-                {mockDream.emotions.map((emotion, index) => (
-                  <View 
-                    key={index} 
-                    style={[
-                      styles.emotionTag, 
-                      { backgroundColor: `${emotionColors[emotion as keyof typeof emotionColors] || '#6B7280'}20` }
-                    ]}
-                  >
-                    <Text style={[
-                      styles.emotionText,
-                      { color: emotionColors[emotion as keyof typeof emotionColors] || '#6B7280' }
-                    ]}>
-                      {emotion}
-                    </Text>
+                {displayEmotion ? (
+                  <View key="primary-emotion" style={styles.emotionTag}>
+                    <Text style={styles.emotionText}>{displayEmotion}</Text>
                   </View>
-                ))}
+                ) : (
+                  <Text style={styles.emptyText}>-</Text>
+                )}
               </View>
             </View>
 
             <View style={styles.tagsSection}>
               <Text style={styles.metaTitle}>Tags</Text>
               <View style={styles.tagsList}>
-                {mockDream.tags.map((tag, index) => (
-                  <View key={index} style={styles.tag}>
-                    <Text style={styles.tagText}>#{tag}</Text>
-                  </View>
-                ))}
+                {tagsToDisplay.length > 0 ? (
+                  tagsToDisplay.map((tag) => (
+                    <View key={tag.id} style={styles.tag}>
+                      <Text style={styles.tagText}>#{tag.name}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>-</Text>
+                )}
               </View>
             </View>
           </View>
 
-          <View style={styles.statsSection}>
-            <View style={styles.statItem}>
-              <Ionicons name="heart" size={20} color="#EF4444" />
-              <Text style={styles.statText}>{mockDream.likes} likes</Text>
+          {/* Only show stats for public/friends dreams */}
+          {isShareable(dream.visibility) && (
+            <View style={styles.statsSection}>
+              <View style={styles.statItem}>
+                <Ionicons
+                  name={isLiked ? 'heart' : 'heart-outline'}
+                  size={20}
+                  color={isLiked ? '#EF4444' : '#6B7280'}
+                />
+                <Text style={styles.statText}>{dream.likes} likes</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
+                <Text style={styles.statText}>{dream.comments} comments</Text>
+              </View>
             </View>
-            <View style={styles.statItem}>
-              <Ionicons name="chatbubble" size={20} color="#3B82F6" />
-              <Text style={styles.statText}>{mockDream.comments} comments</Text>
+          )}
+
+          {isShareable(dream.visibility) && (
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  isLiked && styles.actionButtonActive,
+                ]}
+                onPress={() => setIsLiked(!isLiked)}
+              >
+                <Ionicons
+                  name={isLiked ? 'heart' : 'heart-outline'}
+                  size={20}
+                  color={isLiked ? '#EF4444' : '#6B7280'}
+                />
+                <Text style={styles.actionButtonText}>
+                  {isLiked ? 'Liked' : 'Like'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  isBookmarked && styles.actionButtonActive,
+                ]}
+                onPress={() => setIsBookmarked(!isBookmarked)}
+              >
+                <Ionicons
+                  name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+                  size={20}
+                  color={isBookmarked ? '#F59E0B' : '#6B7280'}
+                />
+                <Text style={styles.actionButtonText}>
+                  {isBookmarked ? 'Saved' : 'Save'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={handleShare}
+              >
+                <Ionicons name="share-outline" size={20} color="#6B7280" />
+                <Text style={styles.actionButtonText}>Share</Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.statItem}>
-              <Ionicons name="eye" size={20} color="#6B7280" />
-              <Text style={styles.statText}>{mockDream.visibility}</Text>
+          )}
+
+          <View style={styles.aiSection}>
+            <TouchableOpacity
+              style={styles.aiButton}
+              onPress={
+                dream.ai_analysis ? handleAnalyze : handleGenerateAnalysis
+              }
+            >
+              <Text style={styles.aiButtonText}>
+                {dream.ai_analysis
+                  ? 'View AI Analysis'
+                  : 'Generate AI Analysis'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Show AI analysis only when user clicks "View AI Analysis" */}
+          {dream.ai_analysis && showAiAnalysis && (
+            <View style={styles.analysisContainer}>
+              <Text style={styles.analysisHeader}>AI Dream Analysis</Text>
+              <Text style={styles.analysisContent}>{dream.ai_analysis}</Text>
             </View>
+          )}
+
+          <View style={styles.dangerZone}>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={handleDelete}
+            >
+              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+              <Text style={styles.deleteButtonText}>Delete Dream</Text>
+            </TouchableOpacity>
           </View>
         </View>
-
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[styles.actionButton, isLiked && styles.actionButtonActive]}
-            onPress={() => setIsLiked(!isLiked)}
-          >
-            <Ionicons 
-              name={isLiked ? "heart" : "heart-outline"} 
-              size={20} 
-              color={isLiked ? "#EF4444" : "#6B7280"} 
-            />
-            <Text style={[styles.actionButtonText, isLiked && styles.actionButtonTextActive]}>
-              {isLiked ? 'Liked' : 'Like'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.actionButton, isBookmarked && styles.actionButtonActive]}
-            onPress={() => setIsBookmarked(!isBookmarked)}
-          >
-            <Ionicons 
-              name={isBookmarked ? "bookmark" : "bookmark-outline"} 
-              size={20} 
-              color={isBookmarked ? "#F59E0B" : "#6B7280"} 
-            />
-            <Text style={[styles.actionButtonText, isBookmarked && styles.actionButtonTextActive]}>
-              {isBookmarked ? 'Saved' : 'Save'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-            <Ionicons name="share-outline" size={20} color="#6B7280" />
-            <Text style={styles.actionButtonText}>Share</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.aiSection}>
-          <TouchableOpacity style={styles.aiButton} onPress={handleAnalyze}>
-            <LinearGradient
-              colors={['#8B5CF6', '#A855F7']}
-              style={styles.aiButtonGradient}
-            >
-              <Ionicons name="sparkles" size={20} color="white" />
-              <Text style={styles.aiButtonText}>Get AI Analysis</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.dangerZone}>
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Ionicons name="trash-outline" size={20} color="#EF4444" />
-            <Text style={styles.deleteButtonText}>Delete Dream</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.bottomPadding} />
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FAFBFC',
-  },
-  headerGradient: {
-    paddingTop: 50,
-  },
+  container: { flex: 1, backgroundColor: '#FAFBFC' },
+  headerGradient: { paddingTop: 50 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -247,7 +447,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -256,16 +456,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#4C1D95',
-  },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: '#4C1D95' },
   editButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -274,10 +470,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  content: {
-    flex: 1,
-    padding: 24,
-  },
+  content: { flex: 1, padding: 24 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  errorText: { fontSize: 16, color: '#EF4444' },
   dreamCard: {
     backgroundColor: 'white',
     borderRadius: 8,
@@ -295,10 +490,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 20,
   },
-  titleSection: {
-    flex: 1,
-    marginRight: 16,
-  },
+  titleSection: { flex: 1, marginRight: 16 },
   dreamTitle: {
     fontSize: 24,
     fontWeight: '700',
@@ -306,11 +498,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     lineHeight: 32,
   },
-  dreamDate: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
+  dreamDate: { fontSize: 14, color: '#6B7280', fontWeight: '500' },
   lucidBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -320,23 +508,15 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     gap: 4,
   },
-  lucidBadgeText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '700',
-  },
+  lucidBadgeText: { color: 'white', fontSize: 12, fontWeight: '700' },
   dreamContent: {
     fontSize: 16,
     color: '#374151',
     lineHeight: 26,
     marginBottom: 24,
   },
-  metaSection: {
-    marginBottom: 24,
-  },
-  emotionsSection: {
-    marginBottom: 20,
-  },
+  metaSection: { marginBottom: 24 },
+  emotionsSection: { marginBottom: 20 },
   metaTitle: {
     fontSize: 16,
     fontWeight: '700',
@@ -347,22 +527,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginTop: 4,
   },
   emotionTag: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
+    backgroundColor: '#F3F4F6',
   },
-  emotionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
+  emotionText: { fontSize: 14, fontWeight: '600', textTransform: 'capitalize' },
   tagsSection: {},
   tagsList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginTop: 4,
   },
   tag: {
     backgroundColor: '#F3F4F6',
@@ -370,22 +549,46 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 6,
   },
-  tagText: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
+  tagText: { fontSize: 14, color: '#6B7280', fontWeight: '500' },
+  analysisContainer: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
   },
+  analysisHeader: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  analysisContent: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  analysisButton: {
+    backgroundColor: '#7C3AED',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  analysisButtonText: { color: 'white', fontSize: 14, fontWeight: '600' },
   statsSection: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingTop: 20,
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
+    paddingBottom: 16,
   },
   statItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    justifyContent: 'center',
   },
   statText: {
     fontSize: 14,
@@ -397,6 +600,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginBottom: 24,
+    justifyContent: 'space-between',
   },
   actionButton: {
     flex: 1,
@@ -413,44 +617,19 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  actionButtonActive: {
-    backgroundColor: '#F3F4F6',
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-  actionButtonTextActive: {
-    color: '#1F2937',
-  },
-  aiSection: {
-    marginBottom: 24,
-  },
+  actionButtonActive: { backgroundColor: '#F3F4F6' },
+  actionButtonText: { fontSize: 14, fontWeight: '600', color: '#6B7280' },
+  actionButtonTextActive: { color: '#1F2937' },
+  aiSection: { marginBottom: 24 },
   aiButton: {
+    backgroundColor: '#7C3AED',
     borderRadius: 8,
-    shadowColor: '#8B5CF6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  aiButtonGradient: {
-    flexDirection: 'row',
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 18,
-    borderRadius: 8,
-    gap: 10,
   },
-  aiButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  dangerZone: {
-    marginBottom: 24,
-  },
+  aiButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  dangerZone: { marginBottom: 24 },
   deleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -462,12 +641,29 @@ const styles = StyleSheet.create({
     borderColor: '#FEE2E2',
     gap: 8,
   },
-  deleteButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#EF4444',
+  deleteButtonText: { fontSize: 14, fontWeight: '600', color: '#EF4444' },
+  bottomPadding: { height: 40 },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
   },
-  bottomPadding: {
-    height: 40,
+  visibilityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    gap: 4,
+  },
+  visibilityText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  emptyText: {
+    color: '#6B7280',
+    fontSize: 14,
   },
 });
