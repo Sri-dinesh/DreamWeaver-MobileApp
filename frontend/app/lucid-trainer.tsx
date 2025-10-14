@@ -1,244 +1,370 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, TextInput, Alert, Modal } from 'react-native';
-import { router } from 'expo-router';
+import useStats from '@/hooks/useStats';
 import { Ionicons } from '@expo/vector-icons';
+import * as Notifications from 'expo-notifications';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+const realityTechniques = {
+  fingerPalm: {
+    title: 'Finger Through Palm',
+    description:
+      'Push a finger into your opposite palm. In a dream, it might go through.',
+  },
+  nosePinch: {
+    title: 'Nose Pinch',
+    description:
+      'Pinch your nose and try to breathe. In a dream, you might still be able to.',
+  },
+  handsCheck: {
+    title: 'Hands Check',
+    description:
+      'Look closely at your hands. Are there too many/few fingers? Do they look distorted?',
+  },
+  timeTextCheck: {
+    title: 'Time/Text Check',
+    description:
+      'Look at a clock or text, look away, then look back. Does it change?',
+  },
+  lightSwitch: {
+    title: 'Light Switch',
+    description:
+      'Try to turn a light on/off. In dreams, they often don’t work or act strangely.',
+  },
+};
+
+const guidedTechniques = {
+  mild: {
+    title: 'MILD (Mnemonic Induction of Lucid Dreams)',
+    description:
+      "This technique involves repeatedly telling yourself you'll remember that you're dreaming, often combined with visualization. It focuses on setting your intention before sleep.",
+    steps: [
+      'Before bed, set a clear intention to recognize when you are dreaming.',
+      'Visualize yourself becoming lucid in a dream.',
+      'Repeat a mantra like, "Next time I’m dreaming, I will remember I’m dreaming."',
+      'Allow yourself to fall asleep with that intention in mind.',
+    ],
+  },
+  wild: {
+    title: 'WILD (Wake Initiated Lucid Dreams)',
+    description:
+      'WILD involves transitioning directly from wakefulness to a dream while maintaining consciousness.',
+    steps: [
+      'Lie down comfortably and relax your body completely.',
+      'Focus on your breathing and remain still.',
+      'Watch for hypnagogic imagery and sensations as you drift off.',
+      'Maintain a gentle awareness as you transition into the dream state.',
+    ],
+  },
+  dots: {
+    title: 'DOTS (Dreaming on The Spot)',
+    description:
+      'DOTS is a spontaneous approach where you decide to have a lucid dream as you fall asleep, trusting that the intention will carry over into the dream.',
+    steps: [
+      'As you lie in bed, firmly decide that you will have a lucid dream tonight.',
+      'Focus solely on that intention without overthinking.',
+      'Let yourself drift off naturally while keeping the intention in mind.',
+    ],
+  },
+};
 
 export default function LucidTrainerScreen() {
   const [activeTab, setActiveTab] = useState('notifications');
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  const [notifEnabled, setNotifEnabled] = useState(false);
   const [frequency, setFrequency] = useState('30');
-  const [showTechniquesModal, setShowTechniquesModal] = useState(false);
-  
-  const mockStats = {
-    totalDreams: 47,
-    lucidDreams: 12,
-    lucidRatio: '25.5%',
+
+  const [showModal, setShowModal] = useState(false);
+
+  const {
+    stats,
+    loading: statsLoading,
+    refresh: refetchStatsData,
+  } = useStats();
+
+  const requestNotificationPermission = async () => {
+    if (Platform.OS === 'web') return { granted: false, ios: false };
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      return { granted: status === 'granted', ios: status === 'granted' };
+    } catch (err) {
+      console.error('Permission request error:', err);
+      return { granted: false, ios: false };
+    }
   };
 
-  const handleSaveSettings = () => {
-    Alert.alert('Settings Saved', 'Reality check notification settings have been saved successfully.');
+  const handleTestNotification = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Not supported', 'Notifications are not supported on web.');
+      return;
+    }
+
+    const perm = await requestNotificationPermission();
+    if (!perm.granted) {
+      Alert.alert(
+        'Permission required',
+        'Please enable notifications in system settings.'
+      );
+      return;
+    }
+
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Reality Check',
+          body: 'Time to perform a reality check!',
+        },
+        trigger: null,
+      });
+      // Alert.alert('Sent', 'Test notification scheduled.');
+    } catch (error) {
+      console.error('Notification error:', error);
+      Alert.alert('Error', 'Failed to schedule notification.');
+    }
   };
 
-  const handleTestNotification = () => {
-    Alert.alert('Test Notification', 'This is how your reality check notification will appear. Remember to check your hands!');
+  const handleScheduleRepeating = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Not supported', 'Notifications are not supported on web.');
+      return;
+    }
+
+    const minutes = parseInt(frequency || '0', 10);
+    if (isNaN(minutes) || minutes <= 0) {
+      Alert.alert(
+        'Invalid frequency',
+        'Please enter a valid number of minutes.'
+      );
+      return;
+    }
+
+    const perm = await requestNotificationPermission();
+    if (!perm.granted) {
+      Alert.alert(
+        'Permission required',
+        'Please enable notifications in system settings.'
+      );
+      return;
+    }
+
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Hourly Reality Check ⏰',
+          body: 'Perform a quick dream awareness test.',
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 60 * 60,
+          repeats: true,
+        },
+      });
+
+      Alert.alert(
+        'Scheduled',
+        `Notifications scheduled every ${minutes} minutes.`
+      );
+    } catch (error) {
+      console.error('Scheduling error:', error);
+      Alert.alert('Error', 'Failed to schedule repeating notifications.');
+    }
   };
 
   const renderNotificationsTab = () => (
     <ScrollView style={styles.tabContent}>
-      <Text style={styles.sectionTitle}>Reality Check Notifications</Text>
-      
+      <Text style={styles.sectionTitle}>Reality Notification Check</Text>
       <View style={styles.settingCard}>
         <View style={styles.settingHeader}>
           <Text style={styles.settingLabel}>Enable Notifications</Text>
           <Switch
-            value={notificationsEnabled}
-            onValueChange={setNotificationsEnabled}
+            value={notifEnabled}
+            onValueChange={setNotifEnabled}
             trackColor={{ false: '#D1D5DB', true: '#A855F7' }}
-            thumbColor={notificationsEnabled ? '#7C3AED' : '#9CA3AF'}
+            thumbColor={notifEnabled ? '#7C3AED' : '#9CA3AF'}
           />
         </View>
         <Text style={styles.settingDescription}>
-          {notificationsEnabled 
-            ? `Scheduled every ${frequency} minutes` 
-            : 'Notifications disabled'
-          }
+          {notifEnabled
+            ? `Notifications enabled (every ${frequency} minutes)`
+            : 'Notifications disabled'}
         </Text>
       </View>
-      
-      {notificationsEnabled && (
+
+      {notifEnabled && (
         <View style={styles.inputContainer}>
           <Text style={styles.inputLabel}>Frequency (minutes)</Text>
           <TextInput
             style={styles.textInput}
-            placeholder="30"
             value={frequency}
             onChangeText={setFrequency}
             keyboardType="numeric"
+            placeholder="30"
           />
         </View>
       )}
-      
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={handleSaveSettings}
-        >
-          <Text style={styles.primaryButtonText}>Save Settings</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={handleTestNotification}
-        >
-          <Ionicons name="notifications-outline" size={18} color="#7C3AED" />
-          <Text style={styles.secondaryButtonText}>Test Notification</Text>
-        </TouchableOpacity>
-      </View>
+
+      <TouchableOpacity
+        style={styles.primaryButton}
+        onPress={handleTestNotification}
+      >
+        <Text style={styles.primaryButtonText}>Test Notification</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.primaryButton,
+          { backgroundColor: '#f59e0b', marginTop: 8 },
+        ]}
+        onPress={handleScheduleRepeating}
+      >
+        <Text style={styles.primaryButtonText}>Schedule Repeating</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 
   const renderTechniquesTab = () => (
     <ScrollView style={styles.tabContent}>
       <Text style={styles.sectionTitle}>Reality Check Techniques</Text>
-      
       <View style={styles.techniquesList}>
-        <View style={styles.techniqueItem}>
-          <Text style={styles.techniqueName}>**Finger Through Palm:**</Text>
-          <Text style={styles.techniqueDescription}>
-            Push a finger into your opposite palm. In a dream, it might go through.
-          </Text>
-        </View>
-        
-        <View style={styles.techniqueItem}>
-          <Text style={styles.techniqueName}>**Nose Pinch:**</Text>
-          <Text style={styles.techniqueDescription}>
-            Pinch your nose and try to breathe. In a dream, you might still be able to.
-          </Text>
-        </View>
-        
-        <View style={styles.techniqueItem}>
-          <Text style={styles.techniqueName}>**Hands Check:**</Text>
-          <Text style={styles.techniqueDescription}>
-            Look closely at your hands. Are there too many/few fingers? Do they look distorted?
-          </Text>
-        </View>
-        
-        <View style={styles.techniqueItem}>
-          <Text style={styles.techniqueName}>**Time/Text Check:**</Text>
-          <Text style={styles.techniqueDescription}>
-            Look at a clock or text, look away, then look back. Does it change?
-          </Text>
-        </View>
-        
-        <View style={styles.techniqueItem}>
-          <Text style={styles.techniqueName}>**Light Switch:**</Text>
-          <Text style={styles.techniqueDescription}>
-            Try to turn a light on/off. In dreams, they often don't work or act strangely.
-          </Text>
-        </View>
-      </View>
-    </ScrollView>
-  );
-
-  const renderStatsTab = () => (
-    <ScrollView style={styles.tabContent}>
-      <Text style={styles.sectionTitle}>Your Lucid Dream Statistics</Text>
-      
-      <View style={styles.statsGrid}>
-        <View style={styles.statCard}>
-          <Ionicons name="book-outline" size={24} color="#7C3AED" />
-          <Text style={styles.statNumber}>{mockStats.totalDreams}</Text>
-          <Text style={styles.statLabel}>Total Dreams Logged</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Ionicons name="flash-outline" size={24} color="#10B981" />
-          <Text style={styles.statNumber}>{mockStats.lucidDreams}</Text>
-          <Text style={styles.statLabel}>Lucid Dreams Recorded</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Ionicons name="trending-up-outline" size={24} color="#F59E0B" />
-          <Text style={styles.statNumber}>{mockStats.lucidRatio}</Text>
-          <Text style={styles.statLabel}>Lucid Dream Ratio</Text>
-        </View>
+        {(
+          Object.keys(realityTechniques) as (keyof typeof realityTechniques)[]
+        ).map((key) => (
+          <View key={key} style={styles.techniqueItem}>
+            <Text style={styles.techniqueName}>
+              {realityTechniques[key].title}
+            </Text>
+            <Text style={styles.techniqueDescription}>
+              {realityTechniques[key].description}
+            </Text>
+          </View>
+        ))}
       </View>
     </ScrollView>
   );
 
   const renderGuidedTab = () => (
     <ScrollView style={styles.tabContent}>
-      <Text style={styles.sectionTitle}>Guided Techniques</Text>
-      
+      <Text style={styles.sectionTitle}>How to Perform Reality Checks</Text>
       <Text style={styles.guidedDescription}>
-        Explore various techniques to induce and stabilize lucid dreams.
+        Reality checks are essential. Regularly examine your environment by
+        checking your hands, pinching your nose, looking at clocks or text, or
+        toggling light switches—these are proven methods to become aware in a
+        dream.
       </Text>
-      
-      <View style={styles.techniquesList}>
-        <Text style={styles.techniqueName}>MILD (Mnemonic Induction of Lucid Dreams)</Text>
-        <Text style={styles.techniqueName}>WILD (Wake Initiated Lucid Dreams)</Text>
-        <Text style={styles.techniqueName}>DOTS (Dreaming on The Spot)</Text>
-      </View>
-      
       <TouchableOpacity
         style={styles.exploreButton}
-        onPress={() => setShowTechniquesModal(true)}
+        onPress={() => setShowModal(true)}
       >
-        <Text style={styles.exploreButtonText}>Explore Techniques</Text>
+        <Text style={styles.exploreButtonText}>View Step-by-Step Guide</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 
   const renderTechniquesModal = () => (
     <Modal
-      visible={showTechniquesModal}
-      animationType="slide"
-      presentationStyle="pageSheet"
+      visible={showModal}
+      // animationType="slide"
+      // presentationStyle="pageSheet"
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Lucid Dreaming Techniques</Text>
+          <Text style={styles.modalTitle}>Reality Check Techniques</Text>
           <TouchableOpacity
             style={styles.closeButton}
-            onPress={() => setShowTechniquesModal(false)}
+            onPress={() => setShowModal(false)}
           >
             <Ionicons name="close" size={24} color="#1F2937" />
           </TouchableOpacity>
         </View>
-        
         <ScrollView style={styles.modalContent}>
-          <View style={styles.modalSection}>
-            <Text style={styles.modalSectionTitle}>MILD (Mnemonic Induction of Lucid Dreams)</Text>
-            <Text style={styles.modalDescription}>
-              This technique involves repeatedly telling yourself that you will remember to recognize you're dreaming while falling asleep, combined with vivid visualization of becoming lucid in a dream.
-            </Text>
-            <Text style={styles.modalStepsTitle}>Steps:</Text>
-            <Text style={styles.modalSteps}>
-              1. Before bed, set an intention to remember your dreams.{'\n'}
-              2. Wake up after 4-6 hours of sleep (e.g., using an alarm).{'\n'}
-              3. Recall your most recent dream. If you can't, think about anything.{'\n'}
-              4. As you fall back asleep, repeatedly tell yourself: "Next time I'm dreaming, I will remember that I'm dreaming."{'\n'}
-              5. Visualize yourself becoming lucid in the dream you just woke from. Imagine performing a reality check and realizing you're dreaming.{'\n'}
-              6. Continue until you fall asleep.
-            </Text>
-          </View>
-          
-          <View style={styles.modalSection}>
-            <Text style={styles.modalSectionTitle}>WILD (Wake Initiated Lucid Dreams)</Text>
-            <Text style={styles.modalDescription}>
-              WILD involves going directly from a waking state into a dream without losing consciousness. This often involves experiencing hypnagogic imagery and sensations.
-            </Text>
-            <Text style={styles.modalStepsTitle}>Steps:</Text>
-            <Text style={styles.modalSteps}>
-              1. Lie still in bed, focusing on your breath or a simple image.{'\n'}
-              2. Relax your body completely. Avoid moving.{'\n'}
-              3. Pay attention to hypnagogic imagery (visuals or sounds) that arise.{'\n'}
-              4. Let yourself drift, but maintain a sliver of awareness. The goal is to transition directly into a dream.{'\n'}
-              5. If successful, you will enter a dream fully aware.
-            </Text>
-          </View>
-          
-          <View style={styles.modalSection}>
-            <Text style={styles.modalSectionTitle}>DOTS (Dreaming on The Spot)</Text>
-            <Text style={styles.modalDescription}>
-              A straightforward technique where you simply decide to have a lucid dream just before falling asleep, and then focus on that intention as you drift off.
-            </Text>
-            <Text style={styles.modalStepsTitle}>Steps:</Text>
-            <Text style={styles.modalSteps}>
-              1. Lie down comfortably.{'\n'}
-              2. Close your eyes and affirm: "I will have a lucid dream tonight."{'\n'}
-              3. Concentrate purely on the intention of becoming lucid, without trying too hard or straining.{'\n'}
-              4. Allow yourself to fall asleep naturally while holding this intention.
-            </Text>
-          </View>
+          {(
+            Object.keys(guidedTechniques) as (keyof typeof guidedTechniques)[]
+          ).map((key) => (
+            <View key={key} style={styles.modalSection}>
+              <Text style={styles.modalSectionTitle}>
+                {guidedTechniques[key].title}
+              </Text>
+              <Text style={styles.modalDescription}>
+                {guidedTechniques[key].description}
+              </Text>
+              <Text style={styles.modalStepsTitle}>Steps:</Text>
+              <Text style={styles.modalSteps}>
+                {guidedTechniques[key].steps
+                  .map((step: string, index: number) => `${index + 1}. ${step}`)
+                  .join('\n')}
+              </Text>
+            </View>
+          ))}
         </ScrollView>
       </View>
     </Modal>
   );
 
+  const renderStatsTab = () => {
+    const total = stats?.dreamCount || 0;
+    const lucid = stats?.lucidDreamCount || 0;
+    const ratio = total > 0 ? ((lucid / total) * 100).toFixed(1) : '0';
+    return (
+      <ScrollView style={styles.tabContent}>
+        <Text style={styles.sectionTitle}>Your Lucid Dream Statistics</Text>
+        {statsLoading ? (
+          <ActivityIndicator size="large" color="#7C3AED" />
+        ) : (
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Ionicons name="book-outline" size={24} color="#7C3AED" />
+              <Text style={styles.statNumber}>{total}</Text>
+              <Text style={styles.statLabel}>Total Dreams Logged</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Ionicons name="flash-outline" size={24} color="#10B981" />
+              <Text style={styles.statNumber}>{lucid}</Text>
+              <Text style={styles.statLabel}>Lucid Dreams Recorded</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Ionicons name="trending-up-outline" size={24} color="#F59E0B" />
+              <Text style={styles.statNumber}>{ratio}%</Text>
+              <Text style={styles.statLabel}>Lucid Dream Ratio</Text>
+            </View>
+          </View>
+        )}
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={refetchStatsData}
+        >
+          <Ionicons name="refresh" size={16} color="#7C3AED" />
+          <Text style={styles.refreshButtonText}>Refresh Statistics</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    );
+  };
+
   const tabs = [
     { id: 'notifications', name: 'Notifications' },
     { id: 'techniques', name: 'Techniques' },
-    { id: 'stats', name: 'Statistics' },
     { id: 'guided', name: 'Guided' },
+    { id: 'stats', name: 'Statistics' },
   ];
 
   return (
@@ -255,24 +381,23 @@ export default function LucidTrainerScreen() {
       </View>
 
       <View style={styles.tabsContainer}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabsContent}
         >
           {tabs.map((tab) => (
             <TouchableOpacity
               key={tab.id}
-              style={[
-                styles.tab,
-                activeTab === tab.id && styles.activeTab
-              ]}
+              style={[styles.tab, activeTab === tab.id && styles.activeTab]}
               onPress={() => setActiveTab(tab.id)}
             >
-              <Text style={[
-                styles.tabText,
-                activeTab === tab.id && styles.activeTabText
-              ]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === tab.id && styles.activeTabText,
+                ]}
+              >
                 {tab.name}
               </Text>
             </TouchableOpacity>
@@ -283,10 +408,10 @@ export default function LucidTrainerScreen() {
       <View style={styles.content}>
         {activeTab === 'notifications' && renderNotificationsTab()}
         {activeTab === 'techniques' && renderTechniquesTab()}
-        {activeTab === 'stats' && renderStatsTab()}
         {activeTab === 'guided' && renderGuidedTab()}
+        {activeTab === 'stats' && renderStatsTab()}
       </View>
-      
+
       {renderTechniquesModal()}
     </View>
   );
@@ -406,34 +531,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
   },
-  buttonContainer: {
-    gap: 12,
-    marginTop: 8,
-  },
   primaryButton: {
     backgroundColor: '#7C3AED',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
+    marginBottom: 12,
   },
   primaryButtonText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#7C3AED',
-    gap: 8,
-  },
-  secondaryButtonText: {
-    color: '#7C3AED',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -465,6 +571,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 16,
+    justifyContent: 'space-between',
   },
   statCard: {
     width: '47%',
@@ -507,6 +614,21 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 24,
+    gap: 8,
+  },
+  refreshButtonText: {
+    color: '#7C3AED',
+    fontSize: 14,
+    fontWeight: '500',
   },
   modalContainer: {
     flex: 1,
@@ -559,5 +681,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4B5563',
     lineHeight: 20,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });

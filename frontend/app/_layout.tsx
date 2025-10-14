@@ -1,9 +1,9 @@
-import React from 'react';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { Stack, Slot } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import React from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 function AppContent() {
   const { isLoading, isAuthenticated } = useAuth();
@@ -21,32 +21,20 @@ function AppContent() {
   return (
     <>
       <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }}>
-        {!isAuthenticated ? (
-          <>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="auth/register"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="auth/forgot-password"
-              options={{ headerShown: false }}
-            />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="profile" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="edit-profile"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen name="preferences" options={{ headerShown: false }} />
-          </>
-        )}
-      </Stack>
+      {!isAuthenticated ? (
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="auth" />
+        </Stack>
+      ) : (
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen name="edit-profile" />
+          <Stack.Screen name="preferences" />
+          <Stack.Screen name="spirit-guide" />
+        </Stack>
+      )}
     </>
   );
 }

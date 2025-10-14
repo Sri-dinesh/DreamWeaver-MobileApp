@@ -1,10 +1,10 @@
+import { authService } from '@/services/authService';
 import axios, {
   AxiosError,
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from 'axios';
 import { Alert } from 'react-native';
-import { authService } from '@/services/authService';
 
 // Create the main API client instance
 const apiClient = axios.create({
@@ -388,6 +388,32 @@ export const api = {
 
     analyzeDream: async (content: string) => {
       const response = await apiClient.post('/ai/analyze-dream', { content });
+      return response.data;
+    },
+  },
+
+  // Spirit Chat API
+  spirit: {
+    getChatHistory: async () => {
+      const response = await apiClient.get('/api/spirit/chat');
+      return response.data;
+    },
+
+    sendMessage: async (message: string) => {
+      const response = await apiClient.post('/api/spirit/chat', { message });
+      return response.data;
+    },
+
+    clearHistory: async () => {
+      const response = await apiClient.delete('/api/spirit/chat');
+      return response.data;
+    },
+  },
+
+  // Lucid Dreaming API
+  lucid: {
+    getStatistics: async () => {
+      const response = await apiClient.get('/lucid/statistics');
       return response.data;
     },
   },

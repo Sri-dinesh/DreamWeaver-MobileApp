@@ -9,10 +9,19 @@ app.use(
   cors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", 'Accept'],
-    credentials: true, 
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+      "X-Request-Time",
+      "X-Request-ID",
+      "X-App-Version",
+    ],
+    credentials: true,
     preflightContinue: false,
-    optionsSuccessStatus: 204 
+    optionsSuccessStatus: 200,
   })
 );
 

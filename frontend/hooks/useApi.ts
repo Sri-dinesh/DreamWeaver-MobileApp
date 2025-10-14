@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/api/client';
 
-// Generic API hook for data fetching with loading and error states
-export function useApi<T>(
-  apiCall: () => Promise<T>,
-  dependencies: any[] = []
-) {
+export function useApi<T>(apiCall: () => Promise<T>, dependencies: any[] = []) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +31,6 @@ export function useApi<T>(
   return { data, loading, error, refetch };
 }
 
-// Specific hooks for different data types
 export function useDreams(params?: { search?: string; page?: number }) {
   return useApi(() => api.dreams.getAll(params), [params]);
 }
@@ -64,14 +59,17 @@ export function usePublicDreams(params?: { page?: number }) {
   return useApi(() => api.community.getPublicDreams(params), [params]);
 }
 
-export function useSharedDreams(visibility: 'public' | 'friends', params?: { page?: number }) {
-  return useApi(() => api.dreams.getShared(visibility, params), [visibility, params]);
+export function useSharedDreams(
+  visibility: 'public' | 'friends',
+  params?: { page?: number }
+) {
+  return useApi(
+    () => api.dreams.getShared(visibility, params),
+    [visibility, params]
+  );
 }
 
-// Mutation hook for API calls that modify data
-export function useApiMutation<T, P>(
-  apiCall: (params: P) => Promise<T>
-) {
+export function useApiMutation<T, P>(apiCall: (params: P) => Promise<T>) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,8 +80,14 @@ export function useApiMutation<T, P>(
       const result = await apiCall(params);
       return result;
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
-      console.error('API Mutation Error:', err);
+      const errorMessage = err.message || 'An error occurred';
+      console.error('API Mutation Error:', {
+        message: errorMessage,
+        status: err.response?.status,
+        data: err.response?.data,
+        params,
+      });
+      setError(errorMessage);
       return null;
     } finally {
       setLoading(false);
@@ -93,13 +97,12 @@ export function useApiMutation<T, P>(
   return { mutate, loading, error };
 }
 
-// Specific mutation hooks
 export function useCreateDream() {
   return useApiMutation(api.dreams.create);
 }
 
 export function useUpdateDream() {
-  return useApiMutation(({ id, data }: { id: string; data: any }) => 
+  return useApiMutation(({ id, data }: { id: string; data: any }) =>
     api.dreams.update(id, data)
   );
 }
@@ -129,8 +132,14 @@ export function useGenerateSubliminal() {
 }
 
 export function useAIChat() {
-  return useApiMutation(({ message, conversationId }: { message: string; conversationId?: string }) =>
-    api.ai.chat(message, conversationId)
+  return useApiMutation(
+    ({
+      message,
+      conversationId,
+    }: {
+      message: string;
+      conversationId?: string;
+    }) => api.ai.chat(message, conversationId)
   );
 }
 
@@ -139,3 +148,7 @@ export function useGeneratePrompt() {
     api.ai.generatePrompt(type, theme)
   );
 }
+
+// export function useLucidDreamStatistics() {
+//   return useApi(() => api.lucid.getStatistics(), []);
+// }
