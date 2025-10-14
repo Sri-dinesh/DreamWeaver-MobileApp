@@ -2,7 +2,7 @@ import useStats from '@/hooks/useStats';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -25,6 +25,7 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
 const realityTechniques = {
   fingerPalm: {
     title: 'Finger Through Palm',
@@ -94,6 +95,9 @@ export default function LucidTrainerScreen() {
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [frequency, setFrequency] = useState('30');
 
+  // store the scheduled notification id so we can cancel it later
+  const [scheduledNotifId, setScheduledNotifId] = useState<string | null>(null);
+
   const [showModal, setShowModal] = useState(false);
 
   const {
@@ -101,6 +105,13 @@ export default function LucidTrainerScreen() {
     loading: statsLoading,
     refresh: refetchStatsData,
   } = useStats();
+
+  useEffect(() => {
+    if (!notifEnabled && scheduledNotifId) {
+      cancelScheduledNotification(scheduledNotifId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notifEnabled]);
 
   const requestNotificationPermission = async () => {
     if (Platform.OS === 'web') return { granted: false, ios: false };
@@ -110,6 +121,15 @@ export default function LucidTrainerScreen() {
     } catch (err) {
       console.error('Permission request error:', err);
       return { granted: false, ios: false };
+    }
+  };
+
+  const cancelScheduledNotification = async (id: string) => {
+    try {
+      await Notifications.cancelScheduledNotificationAsync(id);
+      setScheduledNotifId(null);
+    } catch (err) {
+      console.error('Failed to cancel scheduled notification:', err);
     }
   };
 
@@ -136,7 +156,7 @@ export default function LucidTrainerScreen() {
         },
         trigger: null,
       });
-      // Alert.alert('Sent', 'Test notification scheduled.');
+      Alert.alert('Sent', 'Test notification scheduled.');
     } catch (error) {
       console.error('Notification error:', error);
       Alert.alert('Error', 'Failed to schedule notification.');
@@ -153,7 +173,7 @@ export default function LucidTrainerScreen() {
     if (isNaN(minutes) || minutes <= 0) {
       Alert.alert(
         'Invalid frequency',
-        'Please enter a valid number of minutes.'
+        'Please enter a valid number of minutes (greater than 0).'
       );
       return;
     }
@@ -168,18 +188,28 @@ export default function LucidTrainerScreen() {
     }
 
     try {
-      await Notifications.scheduleNotificationAsync({
+      if (scheduledNotifId) {
+        await Notifications.cancelScheduledNotificationAsync(scheduledNotifId);
+        setScheduledNotifId(null);
+      }
+
+      const trigger = {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: minutes * 60,
+        repeats: true,
+      } as const;
+
+      const id = await Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Hourly Reality Check ⏰',
-          body: 'Perform a quick dream awareness test.',
+          title: 'Reality Check',
+          body: `Perform a reality check (every ${minutes} min).`,
           sound: true,
         },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: 60 * 60,
-          repeats: true,
-        },
+        trigger,
       });
+
+      setScheduledNotifId(id);
+      setNotifEnabled(true);
 
       Alert.alert(
         'Scheduled',
@@ -199,14 +229,16 @@ export default function LucidTrainerScreen() {
           <Text style={styles.settingLabel}>Enable Notifications</Text>
           <Switch
             value={notifEnabled}
-            onValueChange={setNotifEnabled}
+            onValueChange={(val) => setNotifEnabled(val)}
             trackColor={{ false: '#D1D5DB', true: '#A855F7' }}
             thumbColor={notifEnabled ? '#7C3AED' : '#9CA3AF'}
           />
         </View>
         <Text style={styles.settingDescription}>
           {notifEnabled
-            ? `Notifications enabled (every ${frequency} minutes)`
+            ? scheduledNotifId
+              ? `Notifications enabled (every ${frequency} minutes)`
+              : 'Notifications enabled (not scheduled yet)'
             : 'Notifications disabled'}
         </Text>
       </View>
@@ -240,6 +272,18 @@ export default function LucidTrainerScreen() {
       >
         <Text style={styles.primaryButtonText}>Schedule Repeating</Text>
       </TouchableOpacity>
+
+      {scheduledNotifId ? (
+        <TouchableOpacity
+          style={[
+            styles.primaryButton,
+            { backgroundColor: '#ef4444', marginTop: 8 },
+          ]}
+          onPress={() => cancelScheduledNotification(scheduledNotifId)}
+        >
+          <Text style={styles.primaryButtonText}>Cancel Scheduled</Text>
+        </TouchableOpacity>
+      ) : null}
     </ScrollView>
   );
 
@@ -282,11 +326,7 @@ export default function LucidTrainerScreen() {
   );
 
   const renderTechniquesModal = () => (
-    <Modal
-      visible={showModal}
-      // animationType="slide"
-      // presentationStyle="pageSheet"
-    >
+    <Modal visible={showModal}>
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>Reality Check Techniques</Text>
