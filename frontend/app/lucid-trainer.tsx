@@ -128,6 +128,7 @@ export default function LucidTrainerScreen() {
     try {
       await Notifications.cancelScheduledNotificationAsync(id);
       setScheduledNotifId(null);
+      // setNotifEnabled(false); // Uncomment if you want to turn off the switch when cancelled
     } catch (err) {
       console.error('Failed to cancel scheduled notification:', err);
     }
@@ -189,6 +190,9 @@ export default function LucidTrainerScreen() {
 
     try {
       if (scheduledNotifId) {
+        console.log(
+          `Cancelling existing notification with ID: ${scheduledNotifId}`
+        );
         await Notifications.cancelScheduledNotificationAsync(scheduledNotifId);
         setScheduledNotifId(null);
       }
@@ -199,6 +203,7 @@ export default function LucidTrainerScreen() {
         repeats: true,
       } as const;
 
+      console.log(`Scheduling new notification every ${minutes} minutes.`);
       const id = await Notifications.scheduleNotificationAsync({
         content: {
           title: 'Reality Check',

@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { getItem } from '@/utils/secureStorage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -63,9 +64,21 @@ export default function DreamDetailScreen() {
     }
   }, [id]);
 
+  // const getToken = async () => {
+  //   try {
+  //     return localStorage.getItem('userToken');
+  //   } catch (error) {
+  //     console.error('Error getting token:', error);
+  //     return null;
+  //   }
+  // };
+
   const getToken = async () => {
     try {
-      return localStorage.getItem('userToken');
+      // Use your storage utility instead of direct localStorage
+      // return await storage.getItem('userToken');
+      // Or if using the new secureStorage.ts:
+      return await getItem('userToken');
     } catch (error) {
       console.error('Error getting token:', error);
       return null;

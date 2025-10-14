@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
-import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { fetchAllStats, Stats } from '@/services/statsService';
+import { getItem } from '@/utils/secureStorage';
+import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -95,9 +96,21 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
 
   // Helper to get token
+  // const getToken = async () => {
+  //   try {
+  //     return localStorage.getItem('userToken');
+  //   } catch (error) {
+  //     console.error('Error getting token:', error);
+  //     return null;
+  //   }
+  // };
+
   const getToken = async () => {
     try {
-      return localStorage.getItem('userToken');
+      // Use your storage utility instead of direct localStorage
+      // return await storage.getItem('userToken');
+      // Or if using the new secureStorage.ts:
+      return await getItem('userToken');
     } catch (error) {
       console.error('Error getting token:', error);
       return null;
