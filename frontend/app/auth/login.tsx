@@ -1,24 +1,25 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async () => {
@@ -30,7 +31,6 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login(email, password);
-      // No need to navigate here, login function will handle it
       console.log('Login successful');
     } catch (error) {
       const errorMessage =
@@ -41,6 +41,10 @@ export default function LoginScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -82,7 +86,7 @@ export default function LoginScreen() {
                 autoCapitalize="none"
               />
             </View>
-            <View style={styles.inputContainer}>
+            <View style={[styles.inputContainer, styles.passwordInputContainer]}>
               <Ionicons
                 name="lock-closed-outline"
                 size={20}
@@ -90,13 +94,23 @@ export default function LoginScreen() {
                 style={styles.inputIcon}
               />
               <TextInput
-                style={styles.input}
+                style={[styles.input, styles.passwordInput]}
                 placeholder="Password"
                 placeholderTextColor="#9CA3AF"
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                secureTextEntry={!showPassword} 
               />
+              <TouchableOpacity
+                style={styles.passwordVisibilityButton}
+                onPress={togglePasswordVisibility}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={20}
+                  color="#9CA3AF"
+                />
+              </TouchableOpacity>
             </View>
             <TouchableOpacity
               style={[styles.loginButton, loading && styles.buttonDisabled]}
@@ -174,6 +188,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 16,
   },
+  passwordInputContainer: {
+  },
   inputIcon: {
     marginRight: 12,
   },
@@ -182,6 +198,13 @@ const styles = StyleSheet.create({
     height: 50,
     fontSize: 16,
     color: '#1F2937',
+  },
+  passwordInput: {
+    flex: 1,
+  },
+  passwordVisibilityButton: {
+    padding: 8,
+    marginLeft: 8,
   },
   loginButton: {
     backgroundColor: 'white',
