@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { fetchAllStats, Stats } from '@/services/statsService';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -27,7 +28,6 @@ export default function ProfileScreen() {
         setStats(fetchedStats);
       } catch (error) {
         console.error('Error fetching stats:', error);
-        // Set default values on error
         setStats({
           dreamCount: 0,
           lucidDreamCount: 0,
@@ -103,8 +103,10 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     await logout();
-    // No need to navigate here as logout already navigates
   };
+
+  const profilePhoto =
+    user?.profile_picture_url || require('@/assets/images/default-profile.png');
 
   if (!user) {
     return (
@@ -136,9 +138,15 @@ export default function ProfileScreen() {
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user?.username?.charAt(0)?.toUpperCase() || 'U'}
-              </Text>
+              <Image
+                source={
+                  typeof profilePhoto === 'string'
+                    ? { uri: profilePhoto }
+                    : profilePhoto
+                }
+                style={{ width: 80, height: 80, borderRadius: 40 }}
+                resizeMode="cover"
+              />
             </View>
           </View>
 
