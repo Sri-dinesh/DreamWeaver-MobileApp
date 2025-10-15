@@ -398,12 +398,12 @@ export const api = {
       const response = await apiClient.get('/api/spirit/chat');
       return response.data;
     },
-
     sendMessage: async (message: string) => {
-      const response = await apiClient.post('/api/spirit/chat', { message });
+      const response = await apiClient.post('/api/spirit/chat', {
+        message,
+      });
       return response.data;
     },
-
     clearHistory: async () => {
       const response = await apiClient.delete('/api/spirit/chat');
       return response.data;
