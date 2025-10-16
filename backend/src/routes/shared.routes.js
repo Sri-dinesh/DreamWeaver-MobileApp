@@ -1,13 +1,11 @@
-
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const sharedController = require('../controllers/shared.controller');
-const authMiddleware = require('../middleware/auth.middleware');
+const sharedController = require("../controllers/shared.controller");
+const verifyToken = require("../middleware/auth.middleware");
 
-// Get dreams from friends
-router.get('/friends', authMiddleware, sharedController.getFriendDreams);
+router.use(verifyToken);
 
-// Get public dreams
-router.get('/public', authMiddleware, sharedController.getPublicDreams);
+router.get("/", sharedController.getPublicDreams);
+router.get("/:id", sharedController.getSharedDreamById);
 
 module.exports = router;

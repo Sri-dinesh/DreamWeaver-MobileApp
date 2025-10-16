@@ -37,15 +37,26 @@ export interface SleepPlan {
   active: boolean;
 }
 
+export interface Tag {
+  id: string;
+  name: string;
+}
+
 export interface SharedDream {
   id: string;
-  title: string;
+  title?: string;
   content: string;
-  author: User;
+  createdAt: string;
+  updatedAt?: string;
   likes: number;
   comments: number;
-  isPublic: boolean;
-  createdAt: string;
+  visibility: 'private' | 'public' | 'friends';
+  emotion?: string;
+  lucid: boolean;
+  tags?: Tag[];
+  author?: User;
+  isLiked?: boolean;
+  isSaved?: boolean;
 }
 
 export interface AuthContextType {
