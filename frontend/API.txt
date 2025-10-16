@@ -1,0 +1,101 @@
+Backend URL: http:localhost:8080/
+
+Auth
+--/api/auth/login
+--/api/auth/register
+--/api/auth/forgot-password
+
+User
+--/api/user/search
+--/api/user/profile/:userId
+--/api/user/me
+--/api/user/profile
+--/api/user/preferences
+
+Dreams
+--/api/dreams/
+-> post - createDream
+-> get - getDreams
+
+--/api/dreams/:id
+--> get - getDreamById 
+--> put - updateDream
+--> delete - deleteDream
+
+--/api/dreams/search
+--/api/dreams/:id/analyze
+
+
+Analytics
+--/api/analytics/consistency
+--/api/analytics/emotional-map
+--/api/analytics/emotions-distribution
+--/api/analytics/sleep-duration
+--/api/analytics/lucid-dreams
+--/api/analytics/correlations
+
+Sleep
+--/api/sleep/plans
+--/api/sleep/plans/:date
+--/api/sleep/plans/:id
+--/api/sleep/plans/generate-ritual
+
+
+DreamArt
+--/api/dreamart/
+-> get - getDreamArt
+-> post - uploadDreamArt
+
+--/api/dreamart/:id
+--/api/dreamart/generate
+
+Shared
+--/api/shared/friends
+--/api/shared/public
+
+Friend
+--/api/friend/request/:receiverId -> post
+--/api/friend/accept/:requestId -> post
+--/api/friend/reject/:requestId -> post
+--/api/friend/ -> get
+--/api/friend/requests/sent -> get
+--/api/friend/requests/received -> get
+
+
+Lucid
+--/api/lucid/reality-check
+--/api/lucid/statistics
+--/api/lucid/reality-check/test
+--/api/lucid/techniques
+
+SleepRecording
+--/api/recordings/
+-> get - getSleepRecordings
+-> post - uploadRecording
+
+--/api/recordings/:id
+
+
+Audio Library
+--/api/audiolibrary/upload
+--/api/audiolibrary/
+--/api/audiolibrary/add-sample
+
+
+Spirit
+--/api/spirit/chat
+-> post - sendMessage
+-> get - getChatHistory
+-> delete - clearChatHistory
+
+AI
+--/api/ai/prompts
+--/api/ai/prompts/:id
+--/api/ai/audio/prompts
+--/api/ai/audio/prompts/tts
+--/api/ai/audio/prompts/:id
+--/api/ai/affirmation
+--/api/ai/creative-prompt
+--/api/ai/binaural-beat
+--/api/ai/subliminal-audio
+
