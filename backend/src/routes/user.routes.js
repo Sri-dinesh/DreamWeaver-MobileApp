@@ -6,8 +6,11 @@ const verifyToken = require("../middleware/auth.middleware");
 router.use(verifyToken);
 
 router.get("/search", userController.searchUsers);
-router.get("/profile/:userId", userController.getUserProfile);
+router.get("/discover", userController.discoverUsers);
 router.get("/me", userController.getCurrentUser);
+
+router.get("/:userId", userController.getUserProfile);
+
 router.put("/profile", userController.updateProfile);
 router.put("/preferences", userController.updatePreferences);
 

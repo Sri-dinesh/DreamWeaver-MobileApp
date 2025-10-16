@@ -25,16 +25,16 @@ const tabs = [
 
 export default function CommunityScreen() {
   const [activeTab, setActiveTab] = useState('feed');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); 
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sharedDreams, setSharedDreams] = useState<SharedDream[]>([]);
-  const [friends, setFriends] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPublicDreams();
-    fetchFriends();
+    fetchAllUsers(); 
   }, []);
 
   const getToken = async () => {
@@ -77,7 +77,7 @@ export default function CommunityScreen() {
     }
   };
 
-  const fetchFriends = async () => {
+  const fetchAllUsers = async () => {
     try {
       const token = await getToken();
       if (!token) {
@@ -85,30 +85,40 @@ export default function CommunityScreen() {
         return;
       }
 
-      const response = await axios.get(`${API_URL}/api/friend`, {
+      console.log('Fetching all users for discovery');
+
+      const response = await axios.get(`${API_URL}/api/users/discover`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (response.data) {
-        setFriends(response.data);
-      }
+      console.log('Users fetched:', response.data.length);
+      setAllUsers(response.data); 
     } catch (error) {
-      console.error('Error fetching friends:', error);
+      console.error('Error fetching users:', error);
+      setError('Failed to load users'); 
     }
   };
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    Promise.all([fetchPublicDreams(), fetchFriends()]).finally(() => {
+    Promise.all([fetchPublicDreams(), fetchAllUsers()]).finally(() => {
       setRefreshing(false);
     });
   }, []);
 
+  // Filter dreams based on search query
   const filteredDreams = sharedDreams.filter(
     (dream) =>
       dream.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       dream.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       dream.author?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Filter users based on search query
+  const filteredUsers = allUsers.filter(
+    (user) =>
+      user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.bio?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const formatTimeAgo = (dateString: string) => {
@@ -143,7 +153,7 @@ export default function CommunityScreen() {
           placeholder="Search dreams and dreamers..."
           placeholderTextColor="#9CA3AF"
           value={searchQuery}
-          onChangeText={setSearchQuery}
+          onChangeText={setSearchQuery} 
         />
       </View>
 
@@ -175,21 +185,6 @@ export default function CommunityScreen() {
               style={styles.dreamCardGradient}
             >
               <View style={styles.dreamHeader}>
-                {/* <View style={styles.authorInfo}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {dream.author?.name?.charAt(0) || '?'}
-                    </Text>
-                  </View>
-                  <View>
-                    <Text style={styles.authorName}>
-                      {dream.author?.name || 'Anonymous'}
-                    </Text>
-                    <Text style={styles.dreamTime}>
-                      {formatTimeAgo(dream.createdAt)}
-                    </Text>
-                  </View>
-                </View> */}
                 <View style={styles.authorInfo}>
                   <View style={styles.avatar}>
                     <Text style={styles.avatarText}>
@@ -278,51 +273,71 @@ export default function CommunityScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      <View style={styles.friendsHeader}>
-        <TouchableOpacity
-          style={styles.findFriendsButton}
-          onPress={() => router.push('/find-friends' as any)}
-        >
-          <Ionicons name="person-add-outline" size={20} color="#7C3AED" />
-          <Text style={styles.findFriendsText}>Find Friends</Text>
-        </TouchableOpacity>
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search"
+          size={20}
+          color="#9CA3AF"
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search users..."
+          placeholderTextColor="#9CA3AF"
+          value={searchQuery} 
+          onChangeText={setSearchQuery}
+        />
       </View>
 
-      <Text style={styles.sectionTitle}>Your Dream Circle</Text>
+      <Text style={styles.sectionTitle}>Discover Dreamers</Text>
 
-      {friends.length > 0 ? (
-        friends.map((friend) => (
-          <TouchableOpacity key={friend.id} style={styles.friendCard}>
+      {allUsers.length === 0 ? ( 
+        <View style={styles.emptyContainer}>
+          <Ionicons name="people-outline" size={48} color="#D1D5DB" />
+          <Text style={styles.emptyTitle}>No users found</Text>
+          <Text style={styles.emptySubtitle}>
+            Check back later to discover more dreamers
+          </Text>
+        </View>
+      ) : filteredUsers.length > 0 ? ( 
+        filteredUsers.map((user) => (
+          <TouchableOpacity
+            key={user.id}
+            style={styles.friendCard}
+            onPress={() => {
+              console.log('Navigating to user profile:', user.id);
+              router.push({
+                pathname: '/user-profile/[id]',
+                params: { id: user.id },
+              });
+            }}
+          >
             <LinearGradient
               colors={['#FFFFFF', '#F8FAFC']}
               style={styles.friendCardGradient}
             >
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>
-                  {friend.name?.charAt(0) || '?'}
+                  {user.username?.charAt(0) || '?'}
                 </Text>
               </View>
               <View style={styles.friendInfo}>
-                <Text style={styles.friendName}>
-                  {friend.name || friend.username}
-                </Text>
-                <Text style={styles.friendStatus}>
-                  {friend.bio || 'No bio yet'}
+                <Text style={styles.friendName}>{user.username}</Text>
+                <Text style={styles.friendStatus} numberOfLines={1}>
+                  {user.bio || 'No bio yet'}{' '}
                 </Text>
               </View>
               <TouchableOpacity style={styles.messageButton}>
-                <Ionicons name="chatbubble-outline" size={20} color="#7C3AED" />
+                <Ionicons name="person-add-outline" size={20} color="#7C3AED" />
               </TouchableOpacity>
             </LinearGradient>
           </TouchableOpacity>
         ))
       ) : (
         <View style={styles.emptyContainer}>
-          <Ionicons name="people-outline" size={48} color="#D1D5DB" />
-          <Text style={styles.emptyTitle}>No friends yet</Text>
-          <Text style={styles.emptySubtitle}>
-            Connect with other dreamers to build your dream circle
-          </Text>
+          <Ionicons name="search-outline" size={48} color="#D1D5DB" />
+          <Text style={styles.emptyTitle}>No users found</Text>
+          <Text style={styles.emptySubtitle}>Try a different search term</Text>
         </View>
       )}
     </ScrollView>
@@ -349,7 +364,6 @@ export default function CommunityScreen() {
           </TouchableOpacity>
         </View>
       </LinearGradient>
-
       <View style={styles.tabsContainer}>
         {tabs.map((tab) => (
           <TouchableOpacity
@@ -373,8 +387,7 @@ export default function CommunityScreen() {
           </TouchableOpacity>
         ))}
       </View>
-
-      {activeTab === 'feed' ? renderFeed() : renderFriends()}
+      {activeTab === 'feed' ? renderFeed() : renderFriends()}{' '}
     </View>
   );
 }
