@@ -1,136 +1,112 @@
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 // @desc    Get all public dreams
 // @route   GET /api/shared
-// @access  Private (must be logged in to see public dreams)
-exports.getPublicDreams = async (req, res) => {
+// @access  Private
+exports.getSharedDreams = async (req, res) => {
   try {
-    // Ensure user is authenticated
-    if (!req.userId) {
-      return res.status(401).json({ message: "User not authenticated" });
-    }
+    const userId = req.userId;
 
-    // Find all dreams with 'public' visibility
-    const publicDreams = await prisma.dreamEntry.findMany({
-      where: { visibility: "public" },
+    console.log('📋 Fetching shared dreams for user:', userId);
+
+    // Get all friends of current user
+    const friendships = await prisma.friendRequest.findMany({
+      where: {
+        AND: [
+          { status: 'accepted' },
+          {
+            OR: [
+              { sender_id: userId },
+              { receiver_id: userId },
+            ],
+          },
+        ],
+      },
+      select: {
+        sender_id: true,
+        receiver_id: true,
+      },
+    });
+
+    // Extract friend IDs
+    const friendIds = friendships.map((friendship) => {
+      return friendship.sender_id === userId 
+        ? friendship.receiver_id 
+        : friendship.sender_id;
+    });
+
+    console.log('👥 Friends:', friendIds);
+
+    // Get dreams that are either:
+    // 1. Public (visibility = 'public')
+    // 2. Friends-only AND shared by a friend (visibility = 'friends' AND author is a friend)
+    const dreams = await prisma.dreamEntry.findMany({
+      where: {
+        OR: [
+          // Public dreams from anyone
+          { visibility: 'public' },
+          // Friends-only dreams from friends
+          {
+            AND: [
+              { visibility: 'friends' },
+              { user_id: { in: friendIds } },
+            ],
+          },
+        ],
+      },
       include: {
-        tags: {
-          select: { id: true, name: true },
-        },
         user: {
           select: {
             id: true,
             username: true,
-            profile_picture_url: true,
             bio: true,
+            profile_picture_url: true,
+          },
+        },
+        tags: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },
-      orderBy: { timestamp: "desc" },
+      orderBy: { timestamp: 'desc' },
     });
 
-    // Format the response to match the frontend SharedDream structure
-    const formattedDreams = publicDreams.map((dream) => ({
-      id: dream.id.toString(),
-      title: dream.title || undefined,
+    console.log('✅ Shared dreams fetched:', dreams.length);
+    console.log('📊 Dreams breakdown:', {
+      total: dreams.length,
+      public: dreams.filter(d => d.visibility === 'public').length,
+      friendsOnly: dreams.filter(d => d.visibility === 'friends').length,
+    });
+
+    // Transform data for frontend
+    const transformedDreams = dreams.map((dream) => ({
+      id: dream.id,
+      title: dream.title || 'Untitled Dream',
       content: dream.content,
-      createdAt: dream.timestamp.toISOString(),
-      updatedAt: dream.updated_at?.toISOString(),
-      likes: dream.like_count || 0,
-      comments: dream.comment_count || 0,
       visibility: dream.visibility,
-      emotion: dream.emotion,
       lucid: dream.is_lucid,
-      tags: dream.tags,
+      emotion: dream.emotion,
+      createdAt: dream.timestamp,
+      likes: 0, // Add if you track likes
+      comments: 0, // Add if you track comments
+      tags: dream.tags || [],
       author: {
         id: dream.user.id,
         name: dream.user.username,
-        username: dream.user.username,
-        profilePicture: dream.user.profile_picture_url,
         bio: dream.user.bio,
+        avatar: dream.user.profile_picture_url,
       },
     }));
 
-    res.status(200).json(formattedDreams);
+    res.status(200).json(transformedDreams);
   } catch (error) {
-    console.error("Error fetching public dreams:", error);
-    res
-      .status(500)
-      .json({ message: "Something went wrong", error: error.message });
-  }
-};
-
-// @desc    Get details of a single shared dream
-// @route   GET /api/shared/:id
-// @access  Private (user must be logged in)
-exports.getSharedDreamById = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    // Check if id is valid
-    const dreamId = parseInt(id);
-    if (isNaN(dreamId)) {
-      return res.status(400).json({ message: "Valid ID is required" });
-    }
-
-    const dream = await prisma.dreamEntry.findUnique({
-      where: { id: dreamId },
-      include: {
-        tags: {
-          select: { id: true, name: true },
-        },
-        user: {
-          select: {
-            id: true,
-            username: true,
-            profile_picture_url: true,
-            bio: true,
-          },
-        },
-      },
+    console.error('❌ Error fetching shared dreams:', error);
+    res.status(500).json({
+      message: 'Failed to fetch shared dreams',
+      error: error.message,
     });
-
-    if (!dream) {
-      return res.status(404).json({ message: "Dream not found" });
-    }
-
-    // Only return the dream if it's public or belongs to the requesting user
-    if (dream.visibility !== "public" && dream.user_id !== req.userId) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to view this dream" });
-    }
-
-    // Format the response
-    const formattedDream = {
-      id: dream.id.toString(),
-      title: dream.title || undefined,
-      content: dream.content,
-      createdAt: dream.timestamp.toISOString(),
-      updatedAt: dream.updated_at?.toISOString(),
-      likes: dream.like_count || 0,
-      comments: dream.comment_count || 0,
-      visibility: dream.visibility,
-      emotion: dream.emotion,
-      lucid: dream.is_lucid,
-      tags: dream.tags,
-      author: {
-        id: dream.user.id,
-        name: dream.user.username,
-        username: dream.user.username,
-        profilePicture: dream.user.profile_picture_url,
-        bio: dream.user.bio,
-      },
-      isLiked: false,
-      isSaved: false,
-    };
-
-    res.status(200).json(formattedDream);
-  } catch (error) {
-    console.error("Error fetching shared dream:", error);
-    res
-      .status(500)
-      .json({ message: "Something went wrong", error: error.message });
   }
 };

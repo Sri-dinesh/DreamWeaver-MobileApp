@@ -417,6 +417,49 @@ export const api = {
       return response.data;
     },
   },
+
+  // Friends API
+  friends: {
+    sendRequest: async (receiverId: string) => {
+      const response = await apiClient.post(`/friends/request/${receiverId}`);
+      return response.data;
+    },
+
+    acceptRequest: async (requestId: number) => {
+      const response = await apiClient.post(`/friends/accept/${requestId}`);
+      return response.data;
+    },
+
+    rejectRequest: async (requestId: number) => {
+      const response = await apiClient.post(`/friends/reject/${requestId}`);
+      return response.data;
+    },
+
+    cancelRequest: async (requestId: number) => {
+      const response = await apiClient.delete(`/friends/request/${requestId}`);
+      return response.data;
+    },
+
+    getFriends: async () => {
+      const response = await apiClient.get('/friends');
+      return response.data;
+    },
+
+    getSentRequests: async () => {
+      const response = await apiClient.get('/friends/requests/sent');
+      return response.data;
+    },
+
+    getReceivedRequests: async () => {
+      const response = await apiClient.get('/friends/requests/received');
+      return response.data;
+    },
+
+    checkStatus: async (otherUserId: string) => {
+      const response = await apiClient.get(`/friends/status/${otherUserId}`);
+      return response.data;
+    },
+  },
 };
 
 export default apiClient;
