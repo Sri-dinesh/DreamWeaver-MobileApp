@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// @desc    Get all public dreams
+// @desc    Get all public and friends-only dreams
 // @route   GET /api/shared
 // @access  Private
 exports.getSharedDreams = async (req, res) => {
@@ -75,11 +75,6 @@ exports.getSharedDreams = async (req, res) => {
     });
 
     console.log('✅ Shared dreams fetched:', dreams.length);
-    console.log('📊 Dreams breakdown:', {
-      total: dreams.length,
-      public: dreams.filter(d => d.visibility === 'public').length,
-      friendsOnly: dreams.filter(d => d.visibility === 'friends').length,
-    });
 
     // Transform data for frontend
     const transformedDreams = dreams.map((dream) => ({
@@ -90,8 +85,8 @@ exports.getSharedDreams = async (req, res) => {
       lucid: dream.is_lucid,
       emotion: dream.emotion,
       createdAt: dream.timestamp,
-      likes: 0, // Add if you track likes
-      comments: 0, // Add if you track comments
+      likes: 0,
+      comments: 0,
       tags: dream.tags || [],
       author: {
         id: dream.user.id,

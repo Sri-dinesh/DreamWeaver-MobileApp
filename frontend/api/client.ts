@@ -382,7 +382,27 @@ export const api = {
     },
 
     generatePrompt: async (type: string, theme: string) => {
-      const response = await apiClient.post('/ai/prompt', { type, theme });
+      const response = await apiClient.post('/ai/generate-prompt', {
+        promptType: type,
+        theme,
+      });
+      return response.data;
+    },
+
+    generateAffirmation: async (text: string) => {
+      const response = await apiClient.post('/ai/generate-affirmation', {
+        text,
+      });
+      return response.data;
+    },
+
+    getPromptHistory: async () => {
+      const response = await apiClient.get('/ai/history');
+      return response.data;
+    },
+
+    deletePrompt: async (id: number) => {
+      const response = await apiClient.delete(`/ai/history/${id}`);
       return response.data;
     },
 
