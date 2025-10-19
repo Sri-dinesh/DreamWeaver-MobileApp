@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
+import { Audio, AVPlaybackStatus } from 'expo-av';
 import { getItem } from '@/utils/secureStorage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -33,6 +34,7 @@ interface HistoryItem {
   content: string;
   inputText: string;
   createdAt: string;
+  audioUrl?: string;
 }
 
 export default function PromptBuilderScreen() {
@@ -56,11 +58,44 @@ export default function PromptBuilderScreen() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [selectedHistoryFilter, setSelectedHistoryFilter] = useState('all');
 
+  // Audio states
+  const [playingAudioId, setPlayingAudioId] = useState<number | null>(null);
+  const [soundObjects, setSoundObjects] = useState<{
+    [key: number]: Audio.Sound;
+  }>({});
+
   useEffect(() => {
     if (activeTab === 'history') {
       fetchHistory();
     }
   }, [activeTab]);
+
+  // Configure audio mode
+  useEffect(() => {
+    const setupAudio = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+        console.log('✅ Audio mode configured');
+      } catch (error) {
+        console.error('Error setting up audio mode:', error);
+      }
+    };
+
+    setupAudio();
+
+    // Cleanup on unmount
+    return () => {
+      soundObjects &&
+        Object.values(soundObjects).forEach((sound: any) => {
+          sound?.stopAsync().catch((e) => console.warn(e));
+        });
+    };
+  }, []);
 
   const getToken = async () => {
     try {
@@ -114,7 +149,7 @@ export default function PromptBuilderScreen() {
       console.log('Type:', selectedPromptType, 'Theme:', themeKeyword);
 
       const response = await axios.post(
-        `${API_URL}/ai/generate-prompt`,
+        `${API_URL}/api/ai/generate-prompt`,
         {
           promptType: selectedPromptType,
           theme: themeKeyword,
@@ -124,9 +159,16 @@ export default function PromptBuilderScreen() {
 
       console.log('✅ Prompt generated successfully');
       setGeneratedPrompt(response.data.content);
+      setThemeKeyword('');
       fetchHistory();
     } catch (error: any) {
       console.error('❌ Error generating prompt:', error);
+      console.error('Error details:', {
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+        url: error?.config?.url,
+      });
       const errorMessage =
         error?.response?.data?.message ||
         error?.message ||
@@ -154,16 +196,24 @@ export default function PromptBuilderScreen() {
       console.log('🤖 Sending affirmation generation request...');
 
       const response = await axios.post(
-        `${API_URL}/ai/generate-affirmation`,
+        `${API_URL}/api/ai/generate-affirmation`,
         { text: affirmationText },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       console.log('✅ Affirmation generated successfully');
+      console.log('Response:', response.data);
       setGeneratedAffirmation(response.data.affirmation);
+      setAffirmationText('');
       fetchHistory();
     } catch (error: any) {
       console.error('❌ Error generating affirmation:', error);
+      console.error('Error details:', {
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+        url: error?.config?.url,
+      });
       const errorMessage =
         error?.response?.data?.message ||
         error?.message ||
@@ -210,6 +260,110 @@ export default function PromptBuilderScreen() {
         },
       ]
     );
+  };
+
+  const playAudio = async (audioUrl: string, itemId: number) => {
+    try {
+      if (!audioUrl) {
+        console.error('❌ No audio URL provided');
+        Alert.alert('Error', 'Audio URL not available');
+        return;
+      }
+
+      console.log('🎵 Audio URL received:', audioUrl);
+      console.log('🎵 Audio URL starts with:', audioUrl.substring(0, 80));
+
+      // Verify it's a valid HTTPS URL
+      if (!audioUrl.startsWith('https://') && !audioUrl.startsWith('http://')) {
+        console.error('❌ Invalid audio URL format:', audioUrl);
+        Alert.alert('Error', 'Invalid audio URL format');
+        return;
+      }
+
+      // Stop if already playing this audio
+      if (playingAudioId === itemId && soundObjects[itemId]) {
+        console.log('⏸️  Stopping current audio');
+        await soundObjects[itemId].stopAsync();
+        setPlayingAudioId(null);
+        return;
+      }
+
+      // Stop any currently playing audio
+      if (playingAudioId !== null && soundObjects[playingAudioId]) {
+        console.log('⏹️  Stopping previously playing audio');
+        try {
+          await soundObjects[playingAudioId].stopAsync();
+        } catch (e) {
+          console.warn('Warn stopping previous audio:', e);
+        }
+      }
+
+      console.log('📥 Loading audio from URL...');
+      console.log('Audio URL valid format:', audioUrl.startsWith('https://'));
+
+      try {
+        // Create audio sound object
+        const soundObject = new Audio.Sound();
+
+        console.log('⏳ Creating sound object...');
+
+        // Load the audio file
+        await soundObject.loadAsync({ uri: audioUrl });
+        console.log('✅ Audio loaded successfully');
+
+        // Store the sound object
+        setSoundObjects({ ...soundObjects, [itemId]: soundObject });
+        setPlayingAudioId(itemId);
+
+        // Set up playback status update listener
+        soundObject.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
+          if (status.isLoaded) {
+            const currentPosition = Math.round(status.positionMillis || 0);
+            const duration = Math.round(status.durationMillis || 0);
+
+            console.log(
+              `📊 Playing: ${currentPosition}ms / ${duration}ms (${Math.round(
+                (currentPosition / duration) * 100
+              )}%)`
+            );
+
+            if (status.didJustFinish && !status.isLooping) {
+              console.log('✅ Audio finished playing');
+              setPlayingAudioId(null);
+            }
+          } else if (status.error) {
+            console.error('❌ Playback error:', status.error);
+            Alert.alert('Playback Error', 'Failed to play audio');
+            setPlayingAudioId(null);
+          }
+        });
+
+        console.log('▶️  Playing audio...');
+        await soundObject.playAsync();
+        console.log('▶️  Audio playback started successfully');
+      } catch (audioError: any) {
+        console.error('❌ Audio creation/playback error:', audioError);
+        console.error('Error details:', {
+          message: audioError.message,
+          name: audioError.name,
+          code: audioError.code,
+          url: audioUrl,
+        });
+
+        // Show user-friendly error
+        const errorMessage =
+          audioError.message === 'o8.y$f: Response code: 400'
+            ? 'Audio file not found or inaccessible'
+            : `Failed to play audio: ${audioError.message}`;
+
+        Alert.alert('Error', errorMessage);
+        setPlayingAudioId(null);
+      }
+    } catch (error: any) {
+      console.error('❌ Error in playAudio:', error);
+      Alert.alert('Error', 'Failed to play audio');
+      setPlayingAudioId(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -530,58 +684,94 @@ export default function PromptBuilderScreen() {
           keyExtractor={(item) => item.id.toString()}
           scrollEnabled={true}
           nestedScrollEnabled={true}
-          renderItem={({ item }) => (
-            <LinearGradient
-              colors={['#FFFFFF', '#F8FAFC']}
-              style={styles.historyCard}
-            >
-              <View style={styles.historyHeader}>
-                <View style={styles.historyTitleSection}>
-                  <View
-                    style={[
-                      styles.typeBadge,
-                      { backgroundColor: getTypeColor(item.type) + '20' },
-                    ]}
-                  >
-                    <Text
+          renderItem={({ item }) => {
+            console.log('📋 Rendering history item:', {
+              id: item.id,
+              type: item.type,
+              hasAudio: !!item.audioUrl,
+              audioUrl: item.audioUrl?.substring(0, 50),
+            });
+
+            return (
+              <LinearGradient
+                colors={['#FFFFFF', '#F8FAFC']}
+                style={styles.historyCard}
+              >
+                <View style={styles.historyHeader}>
+                  <View style={styles.historyTitleSection}>
+                    <View
                       style={[
-                        styles.typeBadgeText,
-                        { color: getTypeColor(item.type) },
+                        styles.typeBadge,
+                        { backgroundColor: getTypeColor(item.type) + '20' },
                       ]}
                     >
-                      {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                      <Text
+                        style={[
+                          styles.typeBadgeText,
+                          { color: getTypeColor(item.type) },
+                        ]}
+                      >
+                        {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                      </Text>
+                    </View>
+                    <Text style={styles.historyDate}>
+                      {formatDate(item.createdAt)}
                     </Text>
                   </View>
-                  <Text style={styles.historyDate}>
-                    {formatDate(item.createdAt)}
-                  </Text>
+                  <TouchableOpacity
+                    onPress={() => handleDeletePrompt(item.id)}
+                    style={styles.deleteButton}
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  onPress={() => handleDeletePrompt(item.id)}
-                  style={styles.deleteButton}
-                >
-                  <Ionicons name="trash-outline" size={20} color="#EF4444" />
+
+                {item.inputText && (
+                  <View style={styles.historyInputSection}>
+                    <Text style={styles.historyLabel}>Input:</Text>
+                    <Text style={styles.historyInputText}>
+                      {item.inputText}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.historyContentSection}>
+                  <Text style={styles.historyLabel}>Generated:</Text>
+                  <Text style={styles.historyContent}>{item.content}</Text>
+                </View>
+
+                {/* Audio Player */}
+                {item.audioUrl && (
+                  <TouchableOpacity
+                    style={styles.audioPlayerButton}
+                    onPress={() => {
+                      console.log('🎵 Audio button pressed for item:', item.id);
+                      console.log('📀 Audio URL:', item.audioUrl);
+                      playAudio(item.audioUrl, item.id);
+                    }}
+                  >
+                    <Ionicons
+                      name={
+                        playingAudioId === item.id
+                          ? 'pause-circle'
+                          : 'play-circle'
+                      }
+                      size={20}
+                      color="#7C3AED"
+                    />
+                    <Text style={styles.audioPlayerText}>
+                      {playingAudioId === item.id ? 'Playing...' : 'Listen'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity style={styles.copyButton}>
+                  <Ionicons name="copy" size={16} color="#7C3AED" />
+                  <Text style={styles.copyButtonText}>Copy</Text>
                 </TouchableOpacity>
-              </View>
-
-              {item.inputText && (
-                <View style={styles.historyInputSection}>
-                  <Text style={styles.historyLabel}>Input:</Text>
-                  <Text style={styles.historyInputText}>{item.inputText}</Text>
-                </View>
-              )}
-
-              <View style={styles.historyContentSection}>
-                <Text style={styles.historyLabel}>Generated:</Text>
-                <Text style={styles.historyContent}>{item.content}</Text>
-              </View>
-
-              <TouchableOpacity style={styles.copyButton}>
-                <Ionicons name="copy" size={16} color="#7C3AED" />
-                <Text style={styles.copyButtonText}>Copy</Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          )}
+              </LinearGradient>
+            );
+          }}
           contentContainerStyle={styles.historyList}
           scrollIndicatorInsets={{ right: 1 }}
         />
@@ -1024,5 +1214,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#1E40AF',
     lineHeight: 22,
+  },
+  audioPlayerButton: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+    alignSelf: 'flex-start' as const,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    backgroundColor: 'rgba(124, 58, 237, 0.15)',
+    marginTop: 8,
+  },
+  audioPlayerText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#7C3AED',
   },
 });

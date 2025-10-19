@@ -5,19 +5,22 @@ const verifyToken = require("../middleware/auth.middleware");
 
 router.use(verifyToken);
 
-router.post("/generate-prompt", aiController.generatePrompt);
-router.post("/generate-affirmation", aiController.generateAffirmation);
-router.get("/history", aiController.getPromptHistory);
-router.delete("/history/:id", aiController.deletePrompt);
-
-router.route("/audio/prompts").get(aiController.getAudioPrompts);
-router.route("/audio/prompts/tts").post(aiController.createAudioPromptFromTTS);
-router.route("/audio/prompts/:id").delete(aiController.deleteAudioPrompt);
-
+// AI Prompt routes
 router
   .route("/prompts")
   .get(aiController.getAIPrompts)
   .post(aiController.createAIPrompt);
-router.route("/prompts/:id").delete(aiController.deleteAIPrompt);
+router.delete("/prompts/:id", aiController.deleteAIPrompt);
+
+// Audio Prompt routes
+router.get("/audio-prompts", aiController.getAudioPrompts);
+
+// Generation routes
+router.post("/generate-prompt", aiController.generatePrompt);
+router.post("/generate-affirmation", aiController.generateAffirmation);
+
+// History routes
+router.get("/history", aiController.getPromptHistory);
+router.delete("/history/:id", aiController.deletePrompt);
 
 module.exports = router;

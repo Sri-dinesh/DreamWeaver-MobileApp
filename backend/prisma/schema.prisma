@@ -36,7 +36,6 @@ model User {
 model DreamEntry {
   id          Int      @id @default(autoincrement())
   user_id     String
-  title       String?  @default("Untitled Dream")
   timestamp   DateTime @default(now())
   content     String   @db.Text
   ai_analysis String?  @db.Text

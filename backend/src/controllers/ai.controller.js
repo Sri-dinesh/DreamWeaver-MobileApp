@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const ttsService = require("../services/ttsService");
 const prisma = new PrismaClient();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -14,7 +15,10 @@ exports.getAIPrompts = async (req, res) => {
     });
     res.status(200).json(prompts);
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong", error });
+    console.error("Error fetching prompts:", error);
+    res
+      .status(500)
+      .json({ message: "Something went wrong", error: error.message });
   }
 };
 
@@ -22,38 +26,36 @@ exports.getAIPrompts = async (req, res) => {
 // @route   POST /api/ai/prompts
 // @access  Private
 exports.createAIPrompt = async (req, res) => {
-  const { userInput, promptType } = req.body;
+  const { user_input, promptType } = req.body;
 
-  if (!userInput || !promptType) {
+  if (!user_input || !promptType) {
     return res
       .status(400)
-      .json({ message: "UserInput and promptType are required" });
+      .json({ message: "user_input and promptType are required" });
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = `You are a creative assistant. Generate a ${promptType} prompt based on the following input: ${userInput}`;
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const prompt = `You are a creative assistant. Generate a ${promptType} prompt based on the following input: ${user_input}`;
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const ai_response = response.text();
+    const ai_response = result.response.text().trim();
 
     const newPrompt = await prisma.aIPrompt.create({
       data: {
-        user_input: userInput,
-        ai_response,
-        user: { connect: { id: req.userId } },
+        user_id: req.userId,
+        user_input: user_input,
+        ai_response: ai_response,
       },
     });
 
     res.status(201).json(newPrompt);
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong", error });
+    console.error("Error creating prompt:", error);
+    res
+      .status(500)
+      .json({ message: "Something went wrong", error: error.message });
   }
 };
-
-const gtts = require("gtts");
-const path = require("path");
-const fs = require("fs");
 
 // @desc    Delete an AI prompt
 // @route   DELETE /api/ai/prompts/:id
@@ -80,12 +82,15 @@ exports.deleteAIPrompt = async (req, res) => {
 
     res.status(200).json({ message: "Prompt deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong", error });
+    console.error("Error deleting prompt:", error);
+    res
+      .status(500)
+      .json({ message: "Something went wrong", error: error.message });
   }
 };
 
 // @desc    Get all audio prompts for a user
-// @route   GET /api/audio/prompts
+// @route   GET /api/ai/audio-prompts
 // @access  Private
 exports.getAudioPrompts = async (req, res) => {
   try {
@@ -95,169 +100,14 @@ exports.getAudioPrompts = async (req, res) => {
     });
     res.status(200).json(prompts);
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong", error });
+    console.error("Error fetching audio prompts:", error);
+    res
+      .status(500)
+      .json({ message: "Something went wrong", error: error.message });
   }
 };
 
-// @desc    Create a new audio prompt from an AI prompt using TTS
-// @route   POST /api/audio/prompts/tts
-// @access  Private
-exports.createAudioPromptFromTTS = async (req, res) => {
-  const { promptId } = req.body;
-
-  if (!promptId) {
-    return res.status(400).json({ message: "PromptId is required" });
-  }
-
-  try {
-    const aiPrompt = await prisma.aIPrompt.findUnique({
-      where: { id: parseInt(promptId) },
-    });
-
-    if (!aiPrompt) {
-      return res.status(404).json({ message: "AI Prompt not found" });
-    }
-
-    if (aiPrompt.user_id !== req.userId) {
-      return res.status(403).json({ message: "User not authorized" });
-    }
-
-    const text = aiPrompt.ai_response;
-    const speech = new gtts(text, "en");
-    const fileName = `${Date.now()}.mp3`;
-    const filePath = path.join(__dirname, `../../public/audio/${fileName}`);
-
-    speech.save(filePath, async (err, result) => {
-      if (err) {
-        return res
-          .status(500)
-          .json({ message: "Failed to save audio file", error: err });
-      }
-
-      const newAudioPrompt = await prisma.audioPrompt.create({
-        data: {
-          original_text: text,
-          file_path: `/audio/${fileName}`,
-          user: { connect: { id: req.userId } },
-          ai_prompt: { connect: { id: aiPrompt.id } },
-        },
-      });
-
-      res.status(201).json(newAudioPrompt);
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Something went wrong", error });
-  }
-};
-
-// @desc    Delete an audio prompt
-// @route   DELETE /api/audio/prompts/:id
-// @access  Private
-exports.deleteAudioPrompt = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const audioPrompt = await prisma.audioPrompt.findUnique({
-      where: { id: parseInt(id) },
-    });
-
-    if (!audioPrompt) {
-      return res.status(404).json({ message: "Audio prompt not found" });
-    }
-
-    if (audioPrompt.user_id !== req.userId) {
-      return res.status(403).json({ message: "User not authorized" });
-    }
-
-    // Delete the file from the filesystem
-    const filePath = path.join(
-      __dirname,
-      `../../public${audioPrompt.file_path}`
-    );
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-
-    await prisma.audioPrompt.delete({
-      where: { id: parseInt(id) },
-    });
-
-    res.status(200).json({ message: "Audio prompt deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Something went wrong", error });
-  }
-};
-
-// @desc    Generate Creative/Reflection Prompt
-// @route   POST /api/ai/generate-prompt
-// @access  Private
-exports.generatePrompt = async (req, res) => {
-  const { promptType, theme } = req.body;
-  const userId = req.userId;
-
-  if (!promptType || !theme) {
-    return res.status(400).json({
-      message: "Prompt type and theme are required",
-    });
-  }
-
-  // Validate prompt type
-  const validTypes = ["creative", "reflection", "incubation"];
-  if (!validTypes.includes(promptType)) {
-    return res.status(400).json({
-      message: "Invalid prompt type",
-    });
-  }
-
-  try {
-    console.log("🤖 Generating prompt with Gemini AI...");
-    console.log("Type:", promptType, "Theme:", theme);
-
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-    const prompts = {
-      creative: `Create a creative writing prompt for lucid dreaming about "${theme}". Make it engaging and imaginative. Start directly with the prompt, no intro.`,
-      reflection: `Create a self-reflection prompt for dream analysis about "${theme}". Make it thoughtful and introspective. Start directly with the prompt, no intro.`,
-      incubation: `Create a dream incubation prompt about "${theme}" to help with dream recall and lucidity. Start directly with the prompt, no intro.`,
-    };
-
-    const systemPrompt = prompts[promptType];
-    const result = await model.generateContent(systemPrompt);
-    const generatedPrompt = result.response.text();
-
-    console.log(
-      "✅ Prompt generated:",
-      generatedPrompt.substring(0, 100) + "..."
-    );
-
-    // Store in database
-    const savedPrompt = await prisma.aIPrompt.create({
-      data: {
-        user_id: userId,
-        user_input: `${promptType}: ${theme}`,
-        ai_response: generatedPrompt,
-      },
-    });
-
-    console.log("💾 Prompt saved to database:", savedPrompt.id);
-
-    res.status(201).json({
-      id: savedPrompt.id,
-      type: promptType,
-      theme: theme,
-      content: generatedPrompt,
-      createdAt: savedPrompt.timestamp,
-    });
-  } catch (error) {
-    console.error("❌ Error generating prompt:", error);
-    res.status(500).json({
-      message: "Failed to generate prompt",
-      error: error.message,
-    });
-  }
-};
-
-// @desc    Generate Affirmation
+// @desc    Generate Affirmation with Audio
 // @route   POST /api/ai/generate-affirmation
 // @access  Private
 exports.generateAffirmation = async (req, res) => {
@@ -287,26 +137,63 @@ Input: "${text}"
 Generate only the affirmation, no explanation.`;
 
     const result = await model.generateContent(systemPrompt);
-    const generatedAffirmation = result.response.text();
+    const generatedAffirmation = result.response.text().trim();
 
     console.log("✅ Affirmation generated:", generatedAffirmation);
 
-    // Store in database
+    // Convert to speech
+    console.log("🎤 Converting affirmation to speech...");
+    let audioData = null;
+
+    try {
+      audioData = await ttsService.convertTextToSpeech(
+        generatedAffirmation,
+        userId,
+        "affirmation"
+      );
+      console.log("✅ Audio generated and uploaded:", audioData.audioUrl);
+    } catch (ttsError) {
+      console.error("⚠️  TTS conversion failed:", ttsError.message);
+      console.log("⚠️  Continuing without audio...");
+      audioData = null;
+    }
+
+    // Store in database - AIPrompt model (matches schema)
     const savedAffirmation = await prisma.aIPrompt.create({
       data: {
         user_id: userId,
-        user_input: `affirmation: ${text}`,
+        user_input: text,
         ai_response: generatedAffirmation,
       },
     });
 
     console.log("💾 Affirmation saved to database:", savedAffirmation.id);
 
+    // If audio was generated, create AudioPrompt record (matches schema)
+    if (audioData) {
+      try {
+        await prisma.audioPrompt.create({
+          data: {
+            user_id: userId,
+            original_text: generatedAffirmation,
+            file_path: audioData.audioUrl, // Store the public URL
+            description: "Generated affirmation audio",
+            ai_prompt_id: savedAffirmation.id,
+            timestamp: new Date(),
+          },
+        });
+        console.log("💾 Audio record saved to database");
+      } catch (audioError) {
+        console.error("⚠️  Error saving audio record:", audioError.message);
+      }
+    }
+
     res.status(201).json({
       id: savedAffirmation.id,
       type: "affirmation",
       inputText: text,
       affirmation: generatedAffirmation,
+      audioUrl: audioData?.audioUrl || null, // ✅ This is the full Supabase URL
       createdAt: savedAffirmation.timestamp,
     });
   } catch (error) {
@@ -318,7 +205,103 @@ Generate only the affirmation, no explanation.`;
   }
 };
 
-// @desc    Get all AI prompts and affirmations for a user
+// @desc    Generate Prompt with Audio
+// @route   POST /api/ai/generate-prompt
+// @access  Private
+exports.generatePrompt = async (req, res) => {
+  const { promptType, theme } = req.body;
+  const userId = req.userId;
+
+  if (!theme || !theme.trim()) {
+    return res.status(400).json({ message: "Theme is required" });
+  }
+
+  try {
+    console.log("🤖 Generating prompt with Gemini AI...");
+    console.log("Type:", promptType, "Theme:", theme);
+
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    let systemPrompt;
+
+    if (promptType === "creative") {
+      systemPrompt = `You are a dream expert. Create a creative writing prompt for lucid dreaming based on this theme: "${theme}". The prompt should be inspiring, vivid, and encourage imagination. Keep it to 2-3 sentences.`;
+    } else if (promptType === "reflection") {
+      systemPrompt = `You are a psychologist specializing in dreams. Create a self-reflection prompt to explore the theme "${theme}" in dreams. Ask thought-provoking questions to help dream recall and analysis. Keep it to 2-3 sentences.`;
+    } else if (promptType === "incubation") {
+      systemPrompt = `You are a lucid dreaming coach. Create a dream incubation prompt using the theme "${theme}". This should be a clear intention-setting statement for sleep. Keep it to 1-2 sentences and make it actionable.`;
+    }
+
+    const result = await model.generateContent(systemPrompt);
+    const generatedPrompt = result.response.text().trim();
+
+    console.log("✅ Prompt generated:", generatedPrompt);
+
+    // Convert to speech
+    console.log("🎤 Converting prompt to speech...");
+    let audioData = null;
+
+    try {
+      audioData = await ttsService.convertTextToSpeech(
+        generatedPrompt,
+        userId,
+        promptType
+      );
+      console.log("✅ Audio generated and uploaded:", audioData.audioUrl);
+    } catch (ttsError) {
+      console.error("⚠️  TTS conversion failed:", ttsError.message);
+      console.log("⚠️  Continuing without audio...");
+      audioData = null;
+    }
+
+    // Store in database - AIPrompt model
+    const savedPrompt = await prisma.aIPrompt.create({
+      data: {
+        user_id: userId,
+        user_input: `${promptType}: ${theme}`,
+        ai_response: generatedPrompt,
+      },
+    });
+
+    console.log("💾 Prompt saved to database:", savedPrompt.id);
+
+    // If audio was generated, create AudioPrompt record
+    if (audioData) {
+      try {
+        await prisma.audioPrompt.create({
+          data: {
+            user_id: userId,
+            original_text: generatedPrompt,
+            file_path: audioData.audioUrl,
+            description: `Generated ${promptType} prompt audio`,
+            ai_prompt_id: savedPrompt.id,
+            timestamp: new Date(),
+          },
+        });
+        console.log("💾 Audio record saved to database");
+      } catch (audioError) {
+        console.error("⚠️  Error saving audio record:", audioError.message);
+      }
+    }
+
+    res.status(201).json({
+      id: savedPrompt.id,
+      type: promptType,
+      inputText: theme,
+      content: generatedPrompt,
+      audioUrl: audioData?.audioUrl || null,
+      timestamp: savedPrompt.timestamp,
+    });
+  } catch (error) {
+    console.error("❌ Error generating prompt:", error);
+    res.status(500).json({
+      message: "Failed to generate prompt",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Get prompt history
 // @route   GET /api/ai/history
 // @access  Private
 exports.getPromptHistory = async (req, res) => {
@@ -335,21 +318,32 @@ exports.getPromptHistory = async (req, res) => {
 
     console.log("✅ Retrieved", prompts.length, "prompts");
 
+    // Get associated audio files with full URLs
+    const audioPrompts = await prisma.audioPrompt.findMany({
+      where: { user_id: userId },
+    });
+
+    const audioMap = {};
+    audioPrompts.forEach((audio) => {
+      // audio.file_path should already be the full Supabase URL
+      audioMap[audio.ai_prompt_id] = audio.file_path;
+    });
+
     // Transform the data
     const formattedPrompts = prompts.map((prompt) => {
-      const isAffirmation = prompt.user_input.startsWith("affirmation:");
-      const type = isAffirmation
-        ? "affirmation"
-        : prompt.user_input.split(":")[0];
+      const parts = prompt.user_input.split(":");
+      const type = parts[0] || "affirmation";
+      const inputText = parts.slice(1).join(":").trim();
+
+      const audioUrl = audioMap[prompt.id];
+      console.log(`📝 Prompt ${prompt.id} audio URL:`, audioUrl);
 
       return {
         id: prompt.id,
         type: type,
         content: prompt.ai_response,
-        inputText: prompt.user_input.replace(
-          /^(affirmation:|creative:|reflection:|incubation:)\s*/i,
-          ""
-        ),
+        inputText: inputText || prompt.user_input,
+        audioUrl: audioUrl || null,
         createdAt: prompt.timestamp,
       };
     });
@@ -364,8 +358,8 @@ exports.getPromptHistory = async (req, res) => {
   }
 };
 
-// @desc    Delete a prompt
-// @route   DELETE /api/ai/prompts/:id
+// @desc    Delete a prompt and its audio
+// @route   DELETE /api/ai/history/:id
 // @access  Private
 exports.deletePrompt = async (req, res) => {
   const { id } = req.params;
@@ -386,6 +380,26 @@ exports.deletePrompt = async (req, res) => {
         .json({ message: "Not authorized to delete this prompt" });
     }
 
+    // Get associated audio files and delete them
+    const audioPrompts = await prisma.audioPrompt.findMany({
+      where: { ai_prompt_id: parseInt(id) },
+    });
+
+    for (const audio of audioPrompts) {
+      try {
+        await ttsService.deleteAudioFile(audio.file_path);
+        console.log("✅ Audio file deleted:", audio.file_path);
+      } catch (error) {
+        console.error("⚠️  Error deleting audio file:", error);
+      }
+    }
+
+    // Delete audio prompt records
+    await prisma.audioPrompt.deleteMany({
+      where: { ai_prompt_id: parseInt(id) },
+    });
+
+    // Delete the main prompt
     await prisma.aIPrompt.delete({
       where: { id: parseInt(id) },
     });

@@ -412,6 +412,51 @@ export const api = {
     },
   },
 
+  // Change these AI endpoints:
+
+  // AI API
+  // ai: {
+  //   chat: async (message: string, conversationId?: string) => {
+  //     const response = await apiClient.post('/ai/chat', {
+  //       // ✅ Changed from /api/ai/
+  //       message,
+  //       conversationId,
+  //     });
+  //     return response.data;
+  //   },
+
+  //   generatePrompt: async (type: string, theme: string) => {
+  //     const response = await apiClient.post('/ai/generate-prompt', {
+  //       // ✅ Changed
+  //       promptType: type,
+  //       theme,
+  //     });
+  //     return response.data;
+  //   },
+
+  //   generateAffirmation: async (text: string) => {
+  //     const response = await apiClient.post('/ai/generate-affirmation', {
+  //       // ✅ Changed
+  //       text,
+  //     });
+  //     return response.data;
+  //   },
+
+  //   getPromptHistory: async () => {
+  //     const response = await apiClient.get('/ai/history'); // ✅ Changed
+  //     return response.data;
+  //   },
+
+  //   deletePrompt: async (id: number) => {
+  //     const response = await apiClient.delete(`/ai/history/${id}`); // ✅ Changed
+  //     return response.data;
+  //   },
+
+  //   analyzeDream: async (content: string) => {
+  //     const response = await apiClient.post('/ai/analyze-dream', { content });
+  //     return response.data;
+  //   },
+  // },
   // Spirit Chat API
   spirit: {
     getChatHistory: async () => {
