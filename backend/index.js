@@ -1,30 +1,36 @@
 const express = require("express");
-const app = express();
 const dotenv = require("dotenv");
 const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const { PrismaClient } = require("@prisma/client");
 
 dotenv.config();
 
+let prisma;
+if (process.env.NODE_ENV === "production") {
+  prisma = new PrismaClient();
+} else {
+  if (!global.prisma) {
+    global.prisma = new PrismaClient();
+  }
+  prisma = global.prisma;
+}
+
+const app = express();
+
+app.use(helmet());
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "Accept",
-      "Origin",
-      "X-Request-Time",
-      "X-Request-ID",
-      "X-App-Version",
-    ],
+    origin: process.env.FRONTEND_URL || "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
-    preflightContinue: false,
-    optionsSuccessStatus: 200,
   })
 );
-
+app.use(
+  morgan(process.env.NODE_ENV === "production" ? "combined" : "development")
+);
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(express.static("public"));
@@ -44,7 +50,10 @@ const audiolibraryRoutes = require("./src/routes/audiolibrary.routes");
 const sharedRoutes = require("./src/routes/shared.routes");
 
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to DreamWeaver backend." });
+  res.status(200).json({ message: "Welcome to the DreamWeaver Backend API" });
+});
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 app.use("/api/auth", authRoutes);
@@ -61,7 +70,30 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/audiolibrary", audiolibraryRoutes);
 app.use("/api/shared", sharedRoutes);
 
-const PORT = process.env.PORT;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}.`);
+app.use((req, res, next) => {
+  res.status(404).json({
+    message: "Endpoint not found",
+  });
 });
+
+app.use((error, req, res, next) => {
+  console.error("❌ Global Error Handler:", error);
+  const statusCode = error.statusCode || 500;
+  const message =
+    error.message || "An unexpected internal server error occurred.";
+  res.status(statusCode).json({
+    message,
+    stack: process.env.NODE_ENV === "production" ? "🥞" : error.stack,
+  });
+});
+
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 8080;
+  app.listen(PORT, () => {
+    console.log(`\n✅ DreamWeaver Backend Server (Development)`);
+    console.log(`   Running on: http://localhost:${PORT}`);
+    console.log(`   Health Check: http://localhost:${PORT}/api/health\n`);
+  });
+}
+
+module.exports = app;

@@ -1,13 +1,16 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend server for DreamWeaver Mobile App",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build": "prisma generate",
+    "postinstall": "prisma generate"
   },
-  "keywords": [],
+  "keywords": ["dreamweaver", "backend", "REST API", "AI"],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
