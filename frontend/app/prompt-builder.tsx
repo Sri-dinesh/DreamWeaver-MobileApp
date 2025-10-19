@@ -92,7 +92,7 @@ export default function PromptBuilderScreen() {
     return () => {
       soundObjects &&
         Object.values(soundObjects).forEach((sound: any) => {
-          sound?.stopAsync().catch((e) => console.warn(e));
+          sound?.stopAsync().catch((e: any) => console.warn(e));
         });
     };
   }, []);
@@ -747,7 +747,7 @@ export default function PromptBuilderScreen() {
                     onPress={() => {
                       console.log('🎵 Audio button pressed for item:', item.id);
                       console.log('📀 Audio URL:', item.audioUrl);
-                      playAudio(item.audioUrl, item.id);
+                      playAudio(item.audioUrl!, item.id);
                     }}
                   >
                     <Ionicons

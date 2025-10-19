@@ -483,6 +483,36 @@ export const api = {
     },
   },
 
+  // Dream Art API
+  dreamArt: {
+    getAll: async () => {
+      const response = await apiClient.get('/dreamart');
+      return response.data;
+    },
+
+    upload: async (title: string, description: string, imageBase64: string) => {
+      const response = await apiClient.post('/dreamart/upload', {
+        title,
+        description,
+        imageBase64,
+      });
+      return response.data;
+    },
+
+    generate: async (prompt: string, style: string) => {
+      const response = await apiClient.post('/dreamart/generate', {
+        prompt,
+        style,
+      });
+      return response.data;
+    },
+
+    delete: async (id: number) => {
+      const response = await apiClient.delete(`/dreamart/${id}`);
+      return response.data;
+    },
+  },
+
   // Friends API
   friends: {
     sendRequest: async (receiverId: string) => {
