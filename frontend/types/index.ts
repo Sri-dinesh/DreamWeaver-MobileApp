@@ -69,3 +69,18 @@ export interface AuthContextType {
   updateUser: (userData: Partial<User>) => Promise<User>;
   checkAuthStatus: () => Promise<void>;
 }
+
+export interface SpiritChatMessage {
+  id: number;
+  user_id: string;
+  user_message: string;
+  ai_response: string;
+  timestamp: string;
+}
+
+export interface SpiritChatResponse {
+  id: number;
+  user_message: string;
+  ai_response: string;
+  timestamp: string;
+}

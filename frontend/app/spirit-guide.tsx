@@ -1,7 +1,12 @@
+import { getItem } from '@/utils/secureStorage';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import { format } from 'date-fns';
 import { router } from 'expo-router';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -10,15 +15,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  ActivityIndicator,
-  Alert,
 } from 'react-native';
-import { api } from '@/api/client';
-import { format } from 'date-fns';
 
-// Define interfaces for message types
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 interface ChatMessage {
-  id: number; // Ensure this is a number or string, not undefined
+  id: number;
   user_id: string;
   user_message: string;
   ai_response: string;
@@ -39,15 +41,12 @@ export default function SpiritGuideScreen() {
   const [initialLoading, setInitialLoading] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Load chat history when component mounts
   useEffect(() => {
     fetchChatHistory();
   }, []);
 
-  // Auto scroll to bottom when messages change
   useEffect(() => {
     if (messages.length > 0 && scrollViewRef.current) {
-      // Use a small delay to ensure the UI has updated before scrolling
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -57,7 +56,22 @@ export default function SpiritGuideScreen() {
   const fetchChatHistory = async () => {
     try {
       setInitialLoading(true);
-      const history = await api.spirit.getChatHistory();
+
+      // Get token directly
+      const token = await getItem('userToken');
+      if (!token) {
+        console.log('No auth token available, redirecting to login');
+        router.replace('/auth/login');
+        return;
+      }
+
+      const response = await axios.get(`${API_URL}/api/spirit/chat`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const history = response.data;
 
       if (!Array.isArray(history) || history.length === 0) {
         setMessages([
@@ -92,8 +106,20 @@ export default function SpiritGuideScreen() {
       );
 
       setMessages(formattedMessages);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching chat history:', error);
+      console.error('Error details:', {
+        status: error?.response?.status,
+        data: error?.response?.data,
+      });
+
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        Alert.alert('Authentication Required', 'Please log in to continue', [
+          { text: 'OK', onPress: () => router.replace('/auth/login') },
+        ]);
+        return;
+      }
+
       setMessages([
         {
           id: 'welcome',
@@ -113,7 +139,6 @@ export default function SpiritGuideScreen() {
     const userMessageText = inputText.trim();
     const tempUserMessageId = `temp-user-${Date.now()}`;
 
-    // Add temporary user message immediately for UI responsiveness
     const tempUserMessage: Message = {
       id: tempUserMessageId,
       text: userMessageText,
@@ -126,7 +151,14 @@ export default function SpiritGuideScreen() {
     setLoading(true);
 
     try {
-      // Show typing indicator
+      const token = await getItem('userToken');
+      if (!token) {
+        Alert.alert('Authentication Required', 'Please log in to continue', [
+          { text: 'OK', onPress: () => router.replace('/auth/login') },
+        ]);
+        return;
+      }
+
       const typingIndicatorMessage: Message = {
         id: 'typing-indicator',
         text: '...',
@@ -136,30 +168,31 @@ export default function SpiritGuideScreen() {
 
       setMessages((prev) => [...prev, typingIndicatorMessage]);
 
-      // Send message to API
-      const response = await api.spirit.sendMessage(userMessageText);
+      const response = await axios.post(
+        `${API_URL}/api/spirit/chat`,
+        { message: userMessageText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      // Remove typing indicator
       setMessages((prev) => prev.filter((m) => m.id !== 'typing-indicator'));
 
-      // Validate response
-      if (!response || !response.id || !response.ai_response) {
+      const data = response.data;
+      if (!data || !data.id || !data.ai_response) {
         throw new Error('Invalid response from server');
       }
 
-      // Add confirmed messages
       const confirmedUserMessage: Message = {
-        id: `user-${response.id}`,
+        id: `user-${data.id}`,
         text: userMessageText,
         isUser: true,
-        timestamp: parseTimestamp(response.timestamp),
+        timestamp: parseTimestamp(data.timestamp),
       };
 
       const spiritMessage: Message = {
-        id: `ai-${response.id}`,
-        text: response.ai_response,
+        id: `ai-${data.id}`,
+        text: data.ai_response,
         isUser: false,
-        timestamp: parseTimestamp(response.timestamp),
+        timestamp: parseTimestamp(data.timestamp),
       };
 
       setMessages((prev) => [
@@ -167,17 +200,19 @@ export default function SpiritGuideScreen() {
         confirmedUserMessage,
         spiritMessage,
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      console.error('Error details:', {
+        status: error?.response?.status,
+        data: error?.response?.data,
+      });
 
-      // Remove typing indicator and temp message
       setMessages((prev) =>
         prev.filter(
           (m) => m.id !== 'typing-indicator' && m.id !== tempUserMessageId
         )
       );
 
-      // Add error message
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         text: "I'm having trouble connecting to the ethereal plane. Please try again later.",
@@ -194,7 +229,18 @@ export default function SpiritGuideScreen() {
   const handleNewChat = async () => {
     try {
       setLoading(true);
-      await api.spirit.clearHistory();
+
+      const token = await getItem('userToken');
+      if (!token) {
+        Alert.alert('Authentication Required', 'Please log in to continue', [
+          { text: 'OK', onPress: () => router.replace('/auth/login') },
+        ]);
+        return;
+      }
+
+      await axios.delete(`${API_URL}/api/spirit/chat`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       setMessages([
         {
@@ -204,29 +250,28 @@ export default function SpiritGuideScreen() {
           timestamp: new Date(),
         },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error clearing chat history:', error);
+      console.error('Error details:', {
+        status: error?.response?.status,
+        data: error?.response?.data,
+      });
       Alert.alert('Error', 'Failed to start new chat');
     } finally {
       setLoading(false);
     }
   };
 
-  // --- Helper function to safely parse timestamp ---
   const parseTimestamp = (timestamp: string | number | Date): Date => {
     let date: Date;
 
     if (typeof timestamp === 'string') {
-      // Try to parse the string directly
       date = new Date(timestamp);
     } else if (typeof timestamp === 'number') {
-      // If it's a number, assume it's milliseconds since epoch
       date = new Date(timestamp);
     } else if (timestamp instanceof Date) {
-      // If it's already a Date object, use it directly
       date = timestamp;
     } else {
-      // If it's an unexpected type, default to current time
       console.warn(
         'Unexpected timestamp type received:',
         typeof timestamp,
@@ -235,21 +280,18 @@ export default function SpiritGuideScreen() {
       date = new Date();
     }
 
-    // Check if the resulting date is valid
     if (isNaN(date.getTime())) {
       console.warn('Invalid date parsed from timestamp:', timestamp);
-      return new Date(); // Return current date as a fallback
+      return new Date();
     }
 
     return date;
   };
 
-  // --- Helper function to format time ---
   const formatTime = (date: Date) => {
-    // Check if date is valid before formatting
     if (isNaN(date.getTime())) {
       console.error('Tried to format an invalid date object.');
-      return 'Invalid Date'; // Or return a default string like 'Just now'
+      return 'Invalid Date';
     }
     return format(date, 'h:mm a');
   };
@@ -308,7 +350,7 @@ export default function SpiritGuideScreen() {
             </View>
           ) : (
             <View
-              key={message.id} // React uses this key to identify components
+              key={message.id}
               style={[
                 styles.messageContainer,
                 message.isUser ? styles.userMessage : styles.spiritMessage,
