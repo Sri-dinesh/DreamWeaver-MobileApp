@@ -24,6 +24,15 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b8c270a5-4faf-4a10-b0c1-4e983dd51782"
+      }
+    },
+    "android": {
+      "package": "com.sridinesh.DreamWeaver"
     }
   }
 }

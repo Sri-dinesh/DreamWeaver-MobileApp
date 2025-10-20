@@ -1,25 +1,18 @@
-
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const analyticsController = require('../controllers/analytics.controller');
-const authMiddleware = require('../middleware/auth.middleware');
+const analyticsController = require("../controllers/analytics.controller");
+const authMiddleware = require("../middleware/auth.middleware");
 
-// Dream Consistency Insights
-router.get('/consistency', authMiddleware, analyticsController.getDreamConsistency);
+router.use(authMiddleware);
 
-// Emotional Sleep Map
-router.get('/emotional-map', authMiddleware, analyticsController.getEmotionalSleepMap);
-
-// Dream Emotions Distribution
-router.get('/emotions-distribution', authMiddleware, analyticsController.getDreamEmotionsDistribution);
-
-// Last 30 Days Sleep Duration
-router.get('/sleep-duration', authMiddleware, analyticsController.getSleepDuration);
-
-// Lucid Dreams per Day
-router.get('/lucid-dreams', authMiddleware, analyticsController.getLucidDreamsPerDay);
-
-// Sleep & Dream Correlations
-router.get('/correlations', authMiddleware, analyticsController.getSleepDreamCorrelations);
+router.get("/consistency", analyticsController.getDreamConsistency);
+router.get("/emotional-map", analyticsController.getEmotionalSleepMap);
+router.get(
+  "/emotions-distribution",
+  analyticsController.getDreamEmotionsDistribution
+);
+router.get("/sleep-duration", analyticsController.getSleepDuration);
+router.get("/lucid-dreams", analyticsController.getLucidDreamsPerDay);
+router.get("/correlations", analyticsController.getSleepDreamCorrelations);
 
 module.exports = router;
