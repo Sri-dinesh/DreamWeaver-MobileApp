@@ -233,43 +233,6 @@ export const api = {
     },
   },
 
-  // Audio API
-  audio: {
-    getAll: async (params?: { category?: string; search?: string }) => {
-      const response = await apiClient.get('/audio', { params });
-      return response.data;
-    },
-
-    upload: async (formData: FormData) => {
-      const response = await apiClient.post('/audio/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data;
-    },
-
-    generateAffirmation: async (text: string) => {
-      const response = await apiClient.post('/audio/generate/affirmation', {
-        text,
-      });
-      return response.data;
-    },
-
-    generateBinaural: async (params: any) => {
-      const response = await apiClient.post('/audio/generate/binaural', params);
-      return response.data;
-    },
-
-    generateSubliminal: async (params: any) => {
-      const response = await apiClient.post(
-        '/audio/generate/subliminal',
-        params
-      );
-      return response.data;
-    },
-  },
-
   // User API
   user: {
     getProfile: async () => {

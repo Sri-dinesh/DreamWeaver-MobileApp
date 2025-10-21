@@ -19,15 +19,6 @@ export interface DreamEntry {
   userId: string;
 }
 
-export interface AudioFile {
-  id: string;
-  title: string;
-  description: string;
-  duration: number;
-  url: string;
-  category: 'meditation' | 'binaural' | 'nature' | 'guidance';
-}
-
 export interface SleepPlan {
   id: string;
   name: string;

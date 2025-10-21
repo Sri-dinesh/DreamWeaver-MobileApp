@@ -39,10 +39,6 @@ export function useDream(id: string) {
   return useApi(() => api.dreams.getById(id), [id]);
 }
 
-export function useAudioFiles(params?: { category?: string; search?: string }) {
-  return useApi(() => api.audio.getAll(params), [params]);
-}
-
 export function useUserProfile() {
   return useApi(() => api.user.getProfile(), []);
 }
@@ -115,21 +111,6 @@ export function useAnalyzeDream() {
   return useApiMutation(api.ai.analyzeDream);
 }
 
-export function useUploadAudio() {
-  return useApiMutation(api.audio.upload);
-}
-
-export function useGenerateAffirmation() {
-  return useApiMutation(api.audio.generateAffirmation);
-}
-
-export function useGenerateBinaural() {
-  return useApiMutation(api.audio.generateBinaural);
-}
-
-export function useGenerateSubliminal() {
-  return useApiMutation(api.audio.generateSubliminal);
-}
 
 export function useAIChat() {
   return useApiMutation(
