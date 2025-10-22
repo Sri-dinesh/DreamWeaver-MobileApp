@@ -61,15 +61,15 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* Add these to hide other tabs that might exist in your file structure */}
-
-      {/* <Tabs.Screen
-        name="home"
-        options={{ href: null }}
+      <Tabs.Screen
+        name="audio-library"
+        options={{
+          title: 'Audio',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="musical-note" size={size} color={color} />
+          ),
+        }}
       />
-      <Tabs.Screen name="audio" options={{ href: null }} />
-      <Tabs.Screen name="tools" options={{ href: null }} />
-      <Tabs.Screen name="settings" options={{ href: null }} /> */}
     </Tabs>
   );
 }

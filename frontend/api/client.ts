@@ -9,7 +9,7 @@ import storage from '@/utils/storage';
 // Create the main API client instance
 const apiClient = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL,
-  timeout: 15000, // 15-second timeout for security
+  timeout: 60000, // 60-second timeout for file uploads
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -27,9 +27,16 @@ apiClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
 
+      // For multipart/form-data requests, let the browser set the Content-Type
+      // with the correct boundary automatically
+      if (config.data instanceof FormData) {
+        // Remove Content-Type header so browser can set it with boundary
+        delete config.headers['Content-Type'];
+      }
+
       return config;
     } catch (error) {
-      console.error('Request interceptor error:', error);
+      console.error('Auth interceptor error:', error);
       return config;
     }
   },
