@@ -105,8 +105,13 @@ export default function ProfileScreen() {
     await logout();
   };
 
-  const profilePhoto =
-    user?.profile_picture_url || require('@/assets/images/default-profile.png');
+
+  // Check if profile photo exists and is a valid URL
+  const hasValidProfilePhoto = user?.profile_picture_url && 
+    user.profile_picture_url.startsWith('http');
+  
+  // Use default profile image if no valid URL exists or if it's the placeholder path
+  const shouldUseDefaultImage = !hasValidProfilePhoto;
 
   if (!user) {
     return (
@@ -137,17 +142,27 @@ export default function ProfileScreen() {
       <View style={styles.content}>
         <View style={styles.profileSection}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Image
-                source={
-                  typeof profilePhoto === 'string'
-                    ? { uri: profilePhoto }
-                    : profilePhoto
-                }
-                style={{ width: 80, height: 80, borderRadius: 40 }}
-                resizeMode="cover"
-              />
-            </View>
+            {hasValidProfilePhoto ? (
+              <View style={styles.avatar}>
+                <Image
+                  source={{ uri: user.profile_picture_url }}
+                  style={styles.avatarImage}
+                  resizeMode="cover"
+                  onError={() => {
+                    // If image fails to load, it will fall back to default
+                    console.log('Failed to load profile image');
+                  }}
+                />
+              </View>
+            ) : (
+              <View style={styles.avatar}>
+                <Image
+                  source={require('@/assets/images/default-profile.png')}
+                  style={styles.avatarImage}
+                  resizeMode="cover"
+                />
+              </View>
+            )}
           </View>
 
           <Text style={styles.userName}>{user.username}</Text>
@@ -250,6 +265,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#7C3AED',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
   avatarText: {
     fontSize: 32,
