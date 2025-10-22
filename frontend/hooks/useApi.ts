@@ -47,6 +47,30 @@ export function useDreamStats() {
   return useApi(() => api.analytics.getDreamStats(), []);
 }
 
+export function useDreamConsistency() {
+  return useApi(() => api.analytics.getDreamConsistency(), []);
+}
+
+export function useEmotionalSleepMap() {
+  return useApi(() => api.analytics.getEmotionalSleepMap(), []);
+}
+
+export function useDreamEmotionsDistribution() {
+  return useApi(() => api.analytics.getDreamEmotionsDistribution(), []);
+}
+
+export function useSleepDuration() {
+  return useApi(() => api.analytics.getSleepDuration(), []);
+}
+
+export function useLucidDreamsPerDay() {
+  return useApi(() => api.analytics.getLucidDreamsPerDay(), []);
+}
+
+export function useSleepDreamCorrelations() {
+  return useApi(() => api.analytics.getSleepDreamCorrelations(), []);
+}
+
 export function useSleepPlans() {
   return useApi(() => api.sleep.getPlans(), []);
 }

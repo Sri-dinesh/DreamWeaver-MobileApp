@@ -1,10 +1,10 @@
-import { authService } from '@/services/authService';
 import axios, {
   AxiosError,
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from 'axios';
 import { Alert } from 'react-native';
+import storage from '@/utils/storage';
 
 // Create the main API client instance
 const apiClient = axios.create({
@@ -13,28 +13,19 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
-    'X-App-Version': process.env.EXPO_PUBLIC_APP_VERSION,
   },
 });
 
-// Request interceptor to add auth tokens and security headers
+// Request interceptor to add auth tokens
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     try {
       // Get auth token from secure storage
-      const token = await authService.getAccessToken();
+      const token = await storage.getItem('userToken');
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-
-      // Add request timestamp for security
-      config.headers['X-Request-Time'] = new Date().toISOString();
-
-      // Add request ID for tracking
-      config.headers['X-Request-ID'] = `${Date.now()}-${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
 
       return config;
     } catch (error) {
@@ -71,17 +62,20 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = await authService.getRefreshToken();
+        const refreshToken = await storage.getItem('refreshToken');
         if (refreshToken) {
           const response = await axios.post(
-            `${process.env.EXPO_PUBLIC_API_URL}/auth/refresh`,
+            `${process.env.EXPO_PUBLIC_API_URL}/api/auth/refresh`,
             {
               refreshToken,
             }
           );
 
           const { accessToken, refreshToken: newRefreshToken } = response.data;
-          await authService.storeTokens(accessToken, newRefreshToken);
+          await storage.setItem('userToken', accessToken);
+          if (newRefreshToken) {
+            await storage.setItem('refreshToken', newRefreshToken);
+          }
 
           // Retry the original request with new token
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
@@ -142,7 +136,10 @@ apiClient.interceptors.response.use(
 // Helper functions
 async function handleUnauthorized() {
   try {
-    await authService.clearAuthData();
+    await Promise.all([
+      storage.removeItem('userToken'),
+      storage.removeItem('refreshToken')
+    ]);
     // Navigate to login screen - this would be handled by your navigation system
     console.log('User logged out due to unauthorized access');
   } catch (error) {
@@ -174,7 +171,10 @@ export const api = {
 
     logout: async () => {
       const response = await apiClient.post('/auth/logout');
-      await authService.clearAuthData();
+      await Promise.all([
+        storage.removeItem('userToken'),
+        storage.removeItem('refreshToken')
+      ]);
       return response.data;
     },
 
@@ -268,7 +268,37 @@ export const api = {
     },
 
     getEmotionStats: async () => {
-      const response = await apiClient.get('/analytics/emotions');
+      const response = await apiClient.get('/api/analytics/emotions');
+      return response.data;
+    },
+
+    getDreamConsistency: async () => {
+      const response = await apiClient.get('/api/analytics/consistency');
+      return response.data;
+    },
+
+    getEmotionalSleepMap: async () => {
+      const response = await apiClient.get('/api/analytics/emotional-map');
+      return response.data;
+    },
+
+    getDreamEmotionsDistribution: async () => {
+      const response = await apiClient.get('/api/analytics/emotions-distribution');
+      return response.data;
+    },
+
+    getSleepDuration: async () => {
+      const response = await apiClient.get('/api/analytics/sleep-duration');
+      return response.data;
+    },
+
+    getLucidDreamsPerDay: async () => {
+      const response = await apiClient.get('/api/analytics/lucid-dreams');
+      return response.data;
+    },
+
+    getSleepDreamCorrelations: async () => {
+      const response = await apiClient.get('/api/analytics/correlations');
       return response.data;
     },
   },
