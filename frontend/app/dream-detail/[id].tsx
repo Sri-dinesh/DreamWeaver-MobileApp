@@ -93,13 +93,30 @@ export default function DreamDetailScreen() {
         router.replace('/auth/login');
         return;
       }
-      const response = await axios.get(`${API_URL}/api/dreams/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setDream(response.data);
-    } catch (error) {
-      console.error('Error fetching dream:', error);
-      Alert.alert('Error', 'Failed to fetch dream details. Please try again.');
+      
+      try {
+        // First try to fetch from personal dreams
+        const response = await axios.get(`${API_URL}/api/dreams/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setDream(response.data);
+      } catch (personalError: any) {
+        // If personal fetch fails, try shared dreams endpoint
+        if (personalError?.response?.status === 403 || personalError?.response?.status === 404) {
+          try {
+            const sharedResponse = await axios.get(`${API_URL}/api/shared/${id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            setDream(sharedResponse.data);
+          } catch (sharedError) {
+            console.error('Error fetching dream from shared:', sharedError);
+            Alert.alert('Error', 'Failed to fetch dream details. Please try again.');
+          }
+        } else {
+          console.error('Error fetching dream:', personalError);
+          Alert.alert('Error', 'Failed to fetch dream details. Please try again.');
+        }
+      }
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,81 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// @desc    Get a specific shared dream by ID
+// @route   GET /api/shared/:id
+// @access  Private
+exports.getSharedDreamById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+
+    const dreamId = parseInt(id);
+    if (isNaN(dreamId)) {
+      return res.status(400).json({ message: 'Valid ID is required' });
+    }
+
+    const dream = await prisma.dreamEntry.findUnique({
+      where: { id: dreamId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            bio: true,
+            profile_picture_url: true,
+          },
+        },
+        tags: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!dream) {
+      return res.status(404).json({ message: 'Dream not found' });
+    }
+
+    // If it's the user's own dream, allow access
+    if (dream.user_id === userId) {
+      return res.status(200).json(dream);
+    }
+
+    // If dream is public, allow access
+    if (dream.visibility === 'public') {
+      return res.status(200).json(dream);
+    }
+
+    // If dream is friends-only, check if user is a friend
+    if (dream.visibility === 'friends') {
+      const isFriend = await prisma.friendRequest.findFirst({
+        where: {
+          status: 'accepted',
+          OR: [
+            { sender_id: userId, receiver_id: dream.user_id },
+            { sender_id: dream.user_id, receiver_id: userId },
+          ],
+        },
+      });
+
+      if (isFriend) {
+        return res.status(200).json(dream);
+      }
+    }
+
+    // If dream is private or user doesn't have access
+    return res.status(403).json({ message: 'You do not have permission to view this dream' });
+  } catch (error) {
+    console.error('❌ Error fetching shared dream:', error);
+    res.status(500).json({
+      message: 'Failed to fetch dream',
+      error: error.message,
+    });
+  }
+};
+
 // @desc    Get all public and friends-only dreams
 // @route   GET /api/shared
 // @access  Private
