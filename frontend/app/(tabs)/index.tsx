@@ -67,14 +67,14 @@ const features: FeatureCard[] = [
     color: '#F59E0B',
     gradient: ['#F59E0B', '#FBBF24'],
   },
-  {
-    title: 'Sleep Recorder',
-    description: 'Record your sleep patterns',
-    icon: 'radio',
-    route: '/sleep-recorder',
-    color: '#EF4444',
-    gradient: ['#EF4444', '#F87171'],
-  },
+  // {
+  //   title: 'Sleep Recorder',
+  //   description: 'Record your sleep patterns',
+  //   icon: 'radio',
+  //   route: '/sleep-recorder',
+  //   color: '#EF4444',
+  //   gradient: ['#EF4444', '#F87171'],
+  // },
   {
     title: 'Sleep Planner',
     description: 'Plan your sleep schedule',

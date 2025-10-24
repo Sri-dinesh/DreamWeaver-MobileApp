@@ -18,6 +18,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import { getItem } from '@/utils/secureStorage';
+import BinauralBeatGenerator from '@/components/audio-generators/BinauralBeatGenerator';
+import SubliminalAudioGenerator from '@/components/audio-generators/SubliminalAudioGenerator';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 const { width, height } = Dimensions.get('window');
@@ -31,10 +33,16 @@ const promptTypes = [
 interface HistoryItem {
   id: number;
   type: string;
-  content: string;
-  inputText: string;
+  content?: string;
+  inputText?: string;
   createdAt: string;
   audioUrl?: string;
+  affirmation?: string;
+  maskingSound?: string;
+  parameters?: Record<string, any>;
+  duration?: number;
+  fileName?: string;
+  size?: number;
 }
 
 export default function PromptBuilderScreen() {
@@ -117,12 +125,29 @@ export default function PromptBuilderScreen() {
 
       console.log('📋 Fetching prompt history...');
 
-      const response = await axios.get(`${API_URL}/api/ai/history`, {
+      // Fetch prompts/affirmations
+      const promptsResponse = await axios.get(`${API_URL}/api/ai/history`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log('✅ History fetched:', response.data.length, 'items');
-      setHistoryItems(response.data);
+      // Fetch generated audio
+      let audioItems = [];
+      try {
+        const audioResponse = await axios.get(`${API_URL}/api/ai/generated-audio/list`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        audioItems = audioResponse.data || [];
+      } catch (audioError) {
+        console.warn('⚠️ Could not fetch audio history:', audioError);
+      }
+
+      // Combine and sort by date
+      const combined = [...(promptsResponse.data || []), ...audioItems].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      console.log('✅ History fetched:', combined.length, 'items');
+      setHistoryItems(combined);
     } catch (error: any) {
       console.error('❌ Error fetching history:', error);
       Alert.alert('Error', 'Failed to load history');
@@ -224,10 +249,10 @@ export default function PromptBuilderScreen() {
     }
   };
 
-  const handleDeletePrompt = async (id: number) => {
+  const handleDeletePrompt = async (id: number, itemType?: string) => {
     Alert.alert(
-      'Delete Prompt',
-      'Are you sure you want to delete this prompt?',
+      'Delete Item',
+      'Are you sure you want to delete this item?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -241,19 +266,25 @@ export default function PromptBuilderScreen() {
                 return;
               }
 
-              console.log('🗑️  Deleting prompt:', id);
+              console.log('🗑️  Deleting item:', id, 'Type:', itemType);
 
-              await axios.delete(`${API_URL}/api/ai/history/${id}`, {
+              // Determine which endpoint to use based on item type
+              const isAudio = itemType === 'binaural' || itemType === 'subliminal';
+              const endpoint = isAudio
+                ? `${API_URL}/api/ai/generated-audio/${id}`
+                : `${API_URL}/api/ai/history/${id}`;
+
+              await axios.delete(endpoint, {
                 headers: { Authorization: `Bearer ${token}` },
               });
 
-              console.log('✅ Prompt deleted successfully');
-              Alert.alert('Success', 'Prompt deleted');
+              console.log('✅ Item deleted successfully');
+              Alert.alert('Success', 'Item deleted');
               fetchHistory();
             } catch (error: any) {
-              console.error('❌ Error deleting prompt:', error);
+              console.error('❌ Error deleting item:', error);
               const errorMessage =
-                error?.response?.data?.message || 'Failed to delete prompt';
+                error?.response?.data?.message || 'Failed to delete item';
               Alert.alert('Error', errorMessage);
             }
           },
@@ -567,37 +598,11 @@ export default function PromptBuilderScreen() {
   );
 
   const renderBinauralTab = () => (
-    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-      <Text style={styles.sectionTitle}>Binaural Beats Generator</Text>
-      <Text style={styles.sectionDescription}>
-        Generate custom binaural beats to enhance sleep and lucid dreaming.
-      </Text>
-
-      <View style={styles.comingSoonContainer}>
-        <Ionicons name="musical-notes" size={64} color="#A78BFA" />
-        <Text style={styles.comingSoonTitle}>Coming Soon</Text>
-        <Text style={styles.comingSoonSubtitle}>
-          Binaural beats generation feature is under development
-        </Text>
-      </View>
-    </ScrollView>
+    <BinauralBeatGenerator onGenerationComplete={fetchHistory} />
   );
 
   const renderSubliminalTab = () => (
-    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-      <Text style={styles.sectionTitle}>Subliminal Audio Generator</Text>
-      <Text style={styles.sectionDescription}>
-        Create custom subliminal messages for better dream recall and lucidity.
-      </Text>
-
-      <View style={styles.comingSoonContainer}>
-        <Ionicons name="volume-mute" size={64} color="#A78BFA" />
-        <Text style={styles.comingSoonTitle}>Coming Soon</Text>
-        <Text style={styles.comingSoonSubtitle}>
-          Subliminal audio generation feature is under development
-        </Text>
-      </View>
-    </ScrollView>
+    <SubliminalAudioGenerator onGenerationComplete={fetchHistory} />
   );
 
   const renderHistoryTab = () => (
@@ -656,6 +661,23 @@ export default function PromptBuilderScreen() {
             Prompts
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            selectedHistoryFilter === 'audio' && styles.filterButtonActive,
+          ]}
+          onPress={() => setSelectedHistoryFilter('audio')}
+        >
+          <Text
+            style={[
+              styles.filterButtonText,
+              selectedHistoryFilter === 'audio' &&
+                styles.filterButtonTextActive,
+            ]}
+          >
+            Audio
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {historyLoading ? (
@@ -679,9 +701,11 @@ export default function PromptBuilderScreen() {
               (selectedHistoryFilter === 'affirmation' &&
                 item.type === 'affirmation') ||
               (selectedHistoryFilter === 'prompt' &&
-                item.type !== 'affirmation')
+                item.type !== 'affirmation' && item.type !== 'binaural' && item.type !== 'subliminal') ||
+              (selectedHistoryFilter === 'audio' &&
+                (item.type === 'binaural' || item.type === 'subliminal'))
           )}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => `${item.type}-${item.id}`}
           scrollEnabled={true}
           nestedScrollEnabled={true}
           renderItem={({ item }) => {
@@ -719,7 +743,7 @@ export default function PromptBuilderScreen() {
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => handleDeletePrompt(item.id)}
+                    onPress={() => handleDeletePrompt(item.id, item.type)}
                     style={styles.deleteButton}
                   >
                     <Ionicons name="trash-outline" size={20} color="#EF4444" />
@@ -735,40 +759,93 @@ export default function PromptBuilderScreen() {
                   </View>
                 )}
 
-                <View style={styles.historyContentSection}>
-                  <Text style={styles.historyLabel}>Generated:</Text>
-                  <Text style={styles.historyContent}>{item.content}</Text>
-                </View>
-
-                {/* Audio Player */}
-                {item.audioUrl && (
-                  <TouchableOpacity
-                    style={styles.audioPlayerButton}
-                    onPress={() => {
-                      console.log('🎵 Audio button pressed for item:', item.id);
-                      console.log('📀 Audio URL:', item.audioUrl);
-                      playAudio(item.audioUrl!, item.id);
-                    }}
-                  >
-                    <Ionicons
-                      name={
-                        playingAudioId === item.id
-                          ? 'pause-circle'
-                          : 'play-circle'
-                      }
-                      size={20}
-                      color="#7C3AED"
-                    />
-                    <Text style={styles.audioPlayerText}>
-                      {playingAudioId === item.id ? 'Playing...' : 'Listen'}
+                {item.affirmation && (
+                  <View style={styles.historyInputSection}>
+                    <Text style={styles.historyLabel}>Affirmation:</Text>
+                    <Text style={styles.historyInputText}>
+                      {item.affirmation}
                     </Text>
-                  </TouchableOpacity>
+                  </View>
                 )}
 
-                <TouchableOpacity style={styles.copyButton}>
-                  <Ionicons name="copy" size={16} color="#7C3AED" />
-                  <Text style={styles.copyButtonText}>Copy</Text>
-                </TouchableOpacity>
+                {item.maskingSound && (
+                  <View style={styles.historyInputSection}>
+                    <Text style={styles.historyLabel}>Masking Sound:</Text>
+                    <Text style={styles.historyInputText}>
+                      {item.maskingSound === 'white-noise' ? 'White Noise' : 'Ambient Tone'}
+                    </Text>
+                  </View>
+                )}
+
+                {item.type === 'binaural' && item.parameters && (
+                  <View style={styles.historyInputSection}>
+                    <Text style={styles.historyLabel}>Binaural Specs:</Text>
+                    <Text style={styles.historyInputText}>
+                      • Carrier: {item.parameters.carrierFrequency} Hz
+                      • Beat: {item.parameters.beatFrequency} Hz
+                      • Volume: {item.parameters.volume} dBFS
+                    </Text>
+                  </View>
+                )}
+
+                {item.type === 'subliminal' && item.parameters && (
+                  <View style={styles.historyInputSection}>
+                    <Text style={styles.historyLabel}>Subliminal Specs:</Text>
+                    <Text style={styles.historyInputText}>
+                      • Subliminal: {item.parameters.subliminalVolume} dBFS
+                      • Masking: {item.parameters.maskingVolume} dBFS
+                    </Text>
+                  </View>
+                )}
+
+                {item.duration && (
+                  <View style={styles.historyInputSection}>
+                    <Text style={styles.historyLabel}>Duration:</Text>
+                    <Text style={styles.historyInputText}>
+                      {item.duration} minutes
+                    </Text>
+                  </View>
+                )}
+
+                {item.content && (
+                  <View style={styles.historyContentSection}>
+                    <Text style={styles.historyLabel}>Generated:</Text>
+                    <Text style={styles.historyContent}>{item.content}</Text>
+                  </View>
+                )}
+
+                {/* Action Buttons Container */}
+                <View style={styles.actionButtonsContainer}>
+                  {/* Audio Player */}
+                  {item.audioUrl && (
+                    <TouchableOpacity
+                      style={styles.audioPlayerButton}
+                      onPress={() => {
+                        console.log('🎵 Audio button pressed for item:', item.id);
+                        console.log('📀 Audio URL:', item.audioUrl);
+                        playAudio(item.audioUrl!, item.id);
+                      }}
+                    >
+                      <Ionicons
+                        name={
+                          playingAudioId === item.id
+                            ? 'pause-circle'
+                            : 'play-circle'
+                        }
+                        size={20}
+                        color="#7C3AED"
+                      />
+                      <Text style={styles.audioPlayerText}>
+                        {playingAudioId === item.id ? 'Playing...' : 'Listen'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+
+                  <TouchableOpacity style={styles.copyButton}>
+                    <Ionicons name="copy" size={16} color="#7C3AED" />
+                    <Text style={styles.copyButtonText}>Copy</Text>
+                  </TouchableOpacity>
+                </View>
               </LinearGradient>
             );
           }}
@@ -1179,12 +1256,13 @@ const styles = StyleSheet.create({
   copyButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 4,
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
     backgroundColor: 'rgba(124, 58, 237, 0.1)',
+    minHeight: 36,
+    justifyContent: 'center',
   },
   copyButtonText: {
     fontSize: 12,
@@ -1218,17 +1296,24 @@ const styles = StyleSheet.create({
   audioPlayerButton: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     gap: 8,
-    alignSelf: 'flex-start' as const,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 6,
     backgroundColor: 'rgba(124, 58, 237, 0.15)',
-    marginTop: 8,
+    minHeight: 36,
+    minWidth: 100,
   },
   audioPlayerText: {
     fontSize: 12,
     fontWeight: '600' as const,
     color: '#7C3AED',
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 12,
+    marginTop: 12,
   },
 });

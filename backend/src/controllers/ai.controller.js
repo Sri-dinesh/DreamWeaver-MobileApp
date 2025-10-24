@@ -331,18 +331,28 @@ exports.getPromptHistory = async (req, res) => {
 
     // Transform the data
     const formattedPrompts = prompts.map((prompt) => {
-      const parts = prompt.user_input.split(":");
-      const type = parts[0] || "affirmation";
-      const inputText = parts.slice(1).join(":").trim();
+      let type = "affirmation";
+      let inputText = prompt.user_input;
+
+      // Check if user_input contains ':' and starts with a valid prompt type
+      if (prompt.user_input.includes(":")) {
+        const parts = prompt.user_input.split(":");
+        const potentialType = parts[0].toLowerCase().trim();
+        // Valid prompt types
+        if (["creative", "reflection", "incubation"].includes(potentialType)) {
+          type = potentialType;
+          inputText = parts.slice(1).join(":").trim();
+        }
+      }
 
       const audioUrl = audioMap[prompt.id];
-      console.log(`📝 Prompt ${prompt.id} audio URL:`, audioUrl);
+      console.log(`📝 Prompt ${prompt.id} (type: ${type}) audio URL:`, audioUrl);
 
       return {
         id: prompt.id,
         type: type,
         content: prompt.ai_response,
-        inputText: inputText || prompt.user_input,
+        inputText: inputText,
         audioUrl: audioUrl || null,
         createdAt: prompt.timestamp,
       };

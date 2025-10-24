@@ -10,6 +10,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { audioLibraryService } from '@/services/audioLibraryService';
 import AudioUploadTab from '@/components/audio-library/AudioUploadTab';
@@ -86,10 +88,18 @@ export default function AudioLibraryScreen() {
         style={styles.headerGradient}
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Audio Library</Text>
-          <Text style={styles.headerSubtitle}>
-            Upload and manage your audio files
-          </Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#4C1D95" />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Audio Library</Text>
+            <Text style={styles.headerSubtitle}>
+              Upload and manage your audio files
+            </Text>
+          </View>
         </View>
       </LinearGradient>
 
@@ -147,11 +157,27 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 24,
     paddingTop: 10,
+    gap: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  headerContent: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: 28,
