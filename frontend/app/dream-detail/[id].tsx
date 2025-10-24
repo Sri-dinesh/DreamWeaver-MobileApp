@@ -361,69 +361,6 @@ export default function DreamDetailScreen() {
             </View>
           </View>
 
-          {/* Only show stats for public/friends dreams */}
-          {isShareable(dream.visibility) && (
-            <View style={styles.statsSection}>
-              <View style={styles.statItem}>
-                <Ionicons
-                  name={isLiked ? 'heart' : 'heart-outline'}
-                  size={20}
-                  color={isLiked ? '#EF4444' : '#6B7280'}
-                />
-                <Text style={styles.statText}>{dream.likes} likes</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
-                <Text style={styles.statText}>{dream.comments} comments</Text>
-              </View>
-            </View>
-          )}
-
-          {isShareable(dream.visibility) && (
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  isLiked && styles.actionButtonActive,
-                ]}
-                onPress={() => setIsLiked(!isLiked)}
-              >
-                <Ionicons
-                  name={isLiked ? 'heart' : 'heart-outline'}
-                  size={20}
-                  color={isLiked ? '#EF4444' : '#6B7280'}
-                />
-                <Text style={styles.actionButtonText}>
-                  {isLiked ? 'Liked' : 'Like'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  isBookmarked && styles.actionButtonActive,
-                ]}
-                onPress={() => setIsBookmarked(!isBookmarked)}
-              >
-                <Ionicons
-                  name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-                  size={20}
-                  color={isBookmarked ? '#F59E0B' : '#6B7280'}
-                />
-                <Text style={styles.actionButtonText}>
-                  {isBookmarked ? 'Saved' : 'Save'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleShare}
-              >
-                <Ionicons name="share-outline" size={20} color="#6B7280" />
-                <Text style={styles.actionButtonText}>Share</Text>
-              </TouchableOpacity>
-            </View>
-          )}
 
           <View style={styles.aiSection}>
             <TouchableOpacity

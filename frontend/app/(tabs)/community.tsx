@@ -206,7 +206,7 @@ export default function CommunityScreen() {
 
     if (status === 'accepted') {
       return {
-        icon: 'person-check' as const,
+        icon: 'checkmark-circle' as const,
         label: 'Friends',
         disabled: true,
         color: '#10B981',
@@ -285,7 +285,7 @@ export default function CommunityScreen() {
           </View>
         )}
 
-        <Text style={styles.dreamTitle}>{dream.title || 'Untitled Dream'}</Text>
+        {/* <Text style={styles.dreamTitle}>{dream.title || 'Untitled Dream'}</Text> */}
         <Text style={styles.dreamContent} numberOfLines={3}>
           {dream.content}
         </Text>
@@ -299,20 +299,6 @@ export default function CommunityScreen() {
             ))}
           </View>
         )}
-
-        <View style={styles.dreamActions}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="heart-outline" size={20} color="#6B7280" />
-            <Text style={styles.actionText}>{dream.likes || 0}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
-            <Text style={styles.actionText}>{dream.comments || 0}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="share-outline" size={20} color="#6B7280" />
-          </TouchableOpacity>
-        </View>
       </LinearGradient>
     </TouchableOpacity>
   );
