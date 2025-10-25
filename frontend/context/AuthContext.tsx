@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         password,
       });
 
-      console.log('Login response:', response.data);
+      // console.log('Login response:', response.data);
 
       const { token, user } = response.data;
 

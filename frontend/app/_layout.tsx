@@ -8,7 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 function AppContent() {
   const { isLoading, isAuthenticated } = useAuth();
 
-  console.log('Auth state:', { isLoading, isAuthenticated });
+  // console.log('Auth state:', { isLoading, isAuthenticated });
 
   if (isLoading) {
     return (

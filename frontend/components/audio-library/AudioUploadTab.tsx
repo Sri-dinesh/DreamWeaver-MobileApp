@@ -118,13 +118,13 @@ export default function AudioUploadTab({ onUploadSuccess }: AudioUploadTabProps)
       formData.append('visibility', visibility);
       
       // Debug logs
-      console.log('Uploading file:', {
-        name: selectedFile.name,
-        uri: selectedFile.uri,
-        mimeType: selectedFile.mimeType || selectedFile.type,
-        size: selectedFile.size,
-      });
-      console.log('Sending base64 data to backend');
+      // console.log('Uploading file:', {
+      //   name: selectedFile.name,
+      //   uri: selectedFile.uri,
+      //   mimeType: selectedFile.mimeType || selectedFile.type,
+      //   size: selectedFile.size,
+      // });
+      // console.log('Sending base64 data to backend');
 
       await audioLibraryService.uploadAudio(formData);
       

@@ -207,7 +207,7 @@ export default function DreamJournalScreen() {
         tags: tagsArray,
       };
 
-      console.log('Saving dream with data:', dreamData);
+      // console.log('Saving dream with data:', dreamData);
 
       const saveResponse = await axios.post(
         `${API_URL}/api/dreams`,
@@ -220,17 +220,17 @@ export default function DreamJournalScreen() {
         }
       );
 
-      console.log('Save response:', saveResponse.data);
+      // console.log('Save response:', saveResponse.data);
 
       const dreamId = saveResponse.data.id;
 
       if (!dreamId) {
-        console.error('No dream ID returned from save operation');
+        // console.error('No dream ID returned from save operation');
         Alert.alert('Error', 'Could not analyze dream - missing dream ID');
         return;
       }
 
-      console.log(`Analyzing dream with ID: ${dreamId}`);
+      // console.log(`Analyzing dream with ID: ${dreamId}`);
 
       const analysisResponse = await axios.post(
         `${API_URL}/api/dreams/${dreamId}/analyze`,
@@ -243,7 +243,7 @@ export default function DreamJournalScreen() {
         }
       );
 
-      console.log('Analysis response:', analysisResponse.data);
+      // console.log('Analysis response:', analysisResponse.data);
 
       if (analysisResponse.data && analysisResponse.data.analysis) {
         setDreamAnalysis(analysisResponse.data.analysis);
@@ -312,7 +312,7 @@ export default function DreamJournalScreen() {
         return;
       }
 
-      console.log(`Generating analysis for dream ID: ${dream.id}`);
+      // console.log(`Generating analysis for dream ID: ${dream.id}`);
 
       const analysisResponse = await axios.post(
         `${API_URL}/api/dreams/${dream.id}/analyze`,

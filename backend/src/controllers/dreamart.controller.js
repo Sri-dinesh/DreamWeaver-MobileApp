@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 exports.getDreamArt = async (req, res) => {
   try {
     const userId = req.userId;
-    console.log("📷 Fetching dream art for user:", userId);
+    // console.log("📷 Fetching dream art for user:", userId);
 
     // ✅ FIXED: Use correct model name 'dreamArt' (matches schema)
     const artworks = await prisma.dreamArt.findMany({
@@ -17,7 +17,7 @@ exports.getDreamArt = async (req, res) => {
       orderBy: { timestamp: "desc" },
     });
 
-    console.log("✅ Retrieved", artworks.length, "artworks");
+    // console.log("✅ Retrieved", artworks.length, "artworks");
     res.status(200).json(artworks);
   } catch (error) {
     console.error("❌ Error fetching dream art:", error);
@@ -40,13 +40,13 @@ exports.uploadDreamArt = async (req, res) => {
     const userId = req.userId;
     const { title, description, imageBase64 } = req.body;
 
-    console.log("📤 Uploading dream art...");
-    console.log("Received data:", {
-      userId,
-      title,
-      hasDescription: !!description,
-      imageBase64Length: imageBase64?.length || 0,
-    });
+    // console.log("📤 Uploading dream art...");
+    // console.log("Received data:", {
+    //   userId,
+    //   title,
+    //   hasDescription: !!description,
+    //   imageBase64Length: imageBase64?.length || 0,
+    // });
 
     if (!imageBase64) {
       console.error("❌ No image base64 provided");
@@ -58,9 +58,9 @@ exports.uploadDreamArt = async (req, res) => {
       return res.status(400).json({ message: "Title is required" });
     }
 
-    console.log("Title:", title);
-    console.log("User:", userId);
-    console.log("Image base64 size:", imageBase64.length, "bytes");
+    // console.log("Title:", title);
+    // console.log("User:", userId);
+    // console.log("Image base64 size:", imageBase64.length, "bytes");
 
     // Validate image size (max 50MB)
     const maxSize = 50 * 1024 * 1024;
@@ -80,7 +80,7 @@ exports.uploadDreamArt = async (req, res) => {
         : imageBase64; // Use as-is if no prefix
 
       buffer = Buffer.from(base64Data, "base64");
-      console.log("📦 Buffer created:", buffer.length, "bytes");
+      // console.log("📦 Buffer created:", buffer.length, "bytes");
 
       if (buffer.length > maxSize) {
         console.error("❌ Actual image data exceeds max size");
@@ -98,8 +98,8 @@ exports.uploadDreamArt = async (req, res) => {
       .toLowerCase()
       .replace(/\s+/g, "-")}.png`;
 
-    console.log("📝 Uploading to Supabase...");
-    console.log("File path:", fileName);
+    // console.log("📝 Uploading to Supabase...");
+    // console.log("File path:", fileName);
 
     // Upload to Supabase
     const { data, error } = await supabase.storage
@@ -122,7 +122,7 @@ exports.uploadDreamArt = async (req, res) => {
       throw new Error(`Upload failed: ${error.message}`);
     }
 
-    console.log("✅ Upload successful");
+    // console.log("✅ Upload successful");
 
     // Get public URL
     const { data: urlData } = supabase.storage
@@ -130,10 +130,10 @@ exports.uploadDreamArt = async (req, res) => {
       .getPublicUrl(fileName);
 
     const publicUrl = urlData.publicUrl;
-    console.log("🔗 Public URL:", publicUrl);
+    // console.log("🔗 Public URL:", publicUrl);
 
     // Save to database
-    console.log("💾 Saving to database...");
+    // console.log("💾 Saving to database...");
 
     // ✅ FIXED: Use correct Prisma model
     const artwork = await prisma.dreamArt.create({
@@ -146,7 +146,7 @@ exports.uploadDreamArt = async (req, res) => {
       },
     });
 
-    console.log("✅ Artwork saved to database:", artwork.id);
+    // console.log("✅ Artwork saved to database:", artwork.id);
 
     res.status(201).json({
       id: artwork.id,
@@ -178,17 +178,17 @@ exports.generateDreamArt = async (req, res) => {
     const userId = req.userId;
     const { prompt, style = "dreamlike" } = req.body;
 
-    console.log("🎨 Generating AI dream art using Chutes.ai...");
-    console.log("Request ", { userId, prompt, style });
+    // console.log("🎨 Generating AI dream art using Chutes.ai...");
+    // console.log("Request ", { userId, prompt, style });
 
     if (!prompt || !prompt.trim()) {
       console.error("❌ No prompt provided");
       return res.status(400).json({ message: "Prompt is required" });
     }
 
-    console.log("Prompt:", prompt);
-    console.log("Style:", style);
-    console.log("API Key available:", !!process.env.CHUTES_API_KEY);
+    // console.log("Prompt:", prompt);
+    // console.log("Style:", style);
+    // console.log("API Key available:", !!process.env.CHUTES_API_KEY);
 
     // Validate API key
     if (!process.env.CHUTES_API_KEY) {
@@ -204,8 +204,8 @@ exports.generateDreamArt = async (req, res) => {
     const negativePrompt =
       "blur, distortion, low quality, amateur, watermark, text";
 
-    console.log("📡 Calling Chutes.ai API...");
-    console.log("Full prompt:", fullPrompt);
+    // console.log("📡 Calling Chutes.ai API...");
+    // console.log("Full prompt:", fullPrompt);
 
     // Call Chutes.ai API - Get response as binary buffer
     const chutesResponse = await axios.post(
@@ -229,24 +229,24 @@ exports.generateDreamArt = async (req, res) => {
       }
     );
 
-    console.log("✅ Chutes.ai response received");
-    console.log("Response status:", chutesResponse.status);
-    console.log("Response type:", typeof chutesResponse.data);
-    console.log("Response size:", chutesResponse.data.length, "bytes");
+    // console.log("✅ Chutes.ai response received");
+    // console.log("Response status:", chutesResponse.status);
+    // console.log("Response type:", typeof chutesResponse.data);
+    // console.log("Response size:", chutesResponse.data.length, "bytes");
 
     // The response is already a binary buffer (PNG format)
     const imageBuffer = Buffer.from(chutesResponse.data);
-    console.log("📦 Image buffer created:", imageBuffer.length, "bytes");
+    // console.log("📦 Image buffer created:", imageBuffer.length, "bytes");
 
     // Upload to Supabase
-    console.log("📤 Uploading to Supabase...");
+    // console.log("📤 Uploading to Supabase...");
 
     const fileName = `${userId}/generated/${Date.now()}-${prompt
       .toLowerCase()
       .slice(0, 30)
       .replace(/\s+/g, "-")}.png`;
 
-    console.log("File path:", fileName);
+    // console.log("File path:", fileName);
 
     const { data, error } = await supabase.storage
       .from("Dream-Art")
@@ -264,7 +264,7 @@ exports.generateDreamArt = async (req, res) => {
       });
     }
 
-    console.log("✅ Upload to Supabase successful");
+    // console.log("✅ Upload to Supabase successful");
 
     // Get public URL - ✅ FIXED
     let publicUrl;
@@ -293,10 +293,10 @@ exports.generateDreamArt = async (req, res) => {
       });
     }
 
-    console.log("🔗 Public URL:", publicUrl);
+    // console.log("🔗 Public URL:", publicUrl);
 
     // Save to database
-    console.log("💾 Saving to database...");
+    // console.log("💾 Saving to database...");
 
     const artwork = await prisma.dreamArt.create({
       data: {
@@ -308,7 +308,7 @@ exports.generateDreamArt = async (req, res) => {
       },
     });
 
-    console.log("✅ Artwork saved to database:", artwork.id);
+    // console.log("✅ Artwork saved to database:", artwork.id);
 
     res.status(201).json({
       id: artwork.id,
@@ -364,7 +364,7 @@ exports.deleteDreamArt = async (req, res) => {
     const { id } = req.params;
     const userId = req.userId;
 
-    console.log("🗑️  Deleting dream art:", id);
+    // console.log("🗑️  Deleting dream art:", id);
 
     // ✅ FIXED: Use correct Prisma model
     const artwork = await prisma.dreamArt.findUnique({
@@ -395,7 +395,7 @@ exports.deleteDreamArt = async (req, res) => {
           if (error) {
             console.warn("⚠️  Error deleting from Supabase:", error);
           } else {
-            console.log("✅ Image deleted from Supabase");
+            // console.log("✅ Image deleted from Supabase");
           }
         }
       } catch (storageError) {
@@ -408,7 +408,7 @@ exports.deleteDreamArt = async (req, res) => {
       where: { id: parseInt(id) },
     });
 
-    console.log("✅ Artwork deleted from database");
+    // console.log("✅ Artwork deleted from database");
 
     res.status(200).json({ message: "Artwork deleted successfully" });
   } catch (error) {

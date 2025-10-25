@@ -41,12 +41,12 @@ exports.generateBinauralBeat = async (req, res) => {
 
     const volumeDbfs = volume || -6;
 
-    console.log('🎵 Generating binaural beat:', {
-      carrierFrequency,
-      beatFrequency,
-      duration,
-      volumeDbfs,
-    });
+    // console.log('🎵 Generating binaural beat:', {
+    //   carrierFrequency,
+    //   beatFrequency,
+    //   duration,
+    //   volumeDbfs,
+    // });
 
     // Generate audio
     const audioBuffer = audioGenerationService.generateBinauralBeat(
@@ -58,7 +58,7 @@ exports.generateBinauralBeat = async (req, res) => {
 
     const fileName = `binaural_${Date.now()}.wav`;
 
-    console.log('📤 Uploading to Supabase...');
+    // console.log('📤 Uploading to Supabase...');
 
     // Upload to Supabase
     const supabaseResult = await supabaseStorageService.uploadFile(
@@ -73,7 +73,7 @@ exports.generateBinauralBeat = async (req, res) => {
       });
     }
 
-    console.log('✅ Uploaded to Supabase:', supabaseResult.publicUrl);
+    // console.log('✅ Uploaded to Supabase:', supabaseResult.publicUrl);
 
     // Save to database using AudioLibrary model
     try {
@@ -91,7 +91,7 @@ exports.generateBinauralBeat = async (req, res) => {
           visibility: 'private',
         },
       });
-      console.log('✅ Saved to database:', dbRecord.id);
+      // console.log('✅ Saved to database:', dbRecord.id);
     } catch (dbError) {
       console.error('❌ Failed to save to database:', dbError.message);
       return res.status(500).json({
@@ -100,7 +100,7 @@ exports.generateBinauralBeat = async (req, res) => {
       });
     }
 
-    console.log('✅ Binaural beat generated:', fileName);
+    // console.log('✅ Binaural beat generated:', fileName);
 
     res.status(200).json({
       message: 'Binaural beat generated successfully',
@@ -155,13 +155,13 @@ exports.generateSubliminalAudio = async (req, res) => {
     const subliminalVolumeDbfs = subliminalVolume || -30;
     const maskingVolumeDbfs = maskingVolume || -10;
 
-    console.log('🎧 Generating subliminal audio:', {
-      affirmationText: affirmationText.substring(0, 50) + '...',
-      maskingSound,
-      duration,
-      subliminalVolumeDbfs,
-      maskingVolumeDbfs,
-    });
+    // console.log('🎧 Generating subliminal audio:', {
+    //   affirmationText: affirmationText.substring(0, 50) + '...',
+    //   maskingSound,
+    //   duration,
+    //   subliminalVolumeDbfs,
+    //   maskingVolumeDbfs,
+    // });
 
     // Generate audio
     const audioBuffer = audioGenerationService.generateSubliminalAudio(
@@ -174,7 +174,7 @@ exports.generateSubliminalAudio = async (req, res) => {
 
     const fileName = `subliminal_${Date.now()}.wav`;
 
-    console.log('📤 Uploading to Supabase...');
+    // console.log('📤 Uploading to Supabase...');
 
     // Upload to Supabase
     const supabaseResult = await supabaseStorageService.uploadFile(
@@ -189,7 +189,7 @@ exports.generateSubliminalAudio = async (req, res) => {
       });
     }
 
-    console.log('✅ Uploaded to Supabase:', supabaseResult.publicUrl);
+    // console.log('✅ Uploaded to Supabase:', supabaseResult.publicUrl);
 
     // Save to database using AudioLibrary model
     try {
@@ -207,7 +207,7 @@ exports.generateSubliminalAudio = async (req, res) => {
           visibility: 'private',
         },
       });
-      console.log('✅ Saved to database:', dbRecord.id);
+      // console.log('✅ Saved to database:', dbRecord.id);
     } catch (dbError) {
       console.error('❌ Failed to save to database:', dbError.message);
       return res.status(500).json({
@@ -216,7 +216,7 @@ exports.generateSubliminalAudio = async (req, res) => {
       });
     }
 
-    console.log('✅ Subliminal audio generated:', fileName);
+    // console.log('✅ Subliminal audio generated:', fileName);
 
     res.status(200).json({
       message: 'Subliminal audio generated successfully',
@@ -274,7 +274,7 @@ exports.getGeneratedAudioHistory = async (req, res) => {
   try {
     const userId = req.userId;
 
-    console.log('📋 Fetching generated audio history for user:', userId);
+    // console.log('📋 Fetching generated audio history for user:', userId);
 
     // Fetch binaural and subliminal audio from AudioLibrary
     const audioHistory = await prisma.audioLibrary.findMany({
@@ -298,7 +298,7 @@ exports.getGeneratedAudioHistory = async (req, res) => {
       createdAt: audio.created_at,
     }));
 
-    console.log('✅ Audio history fetched:', formattedAudio.length, 'items');
+    // console.log('✅ Audio history fetched:', formattedAudio.length, 'items');
 
     res.status(200).json(formattedAudio);
   } catch (error) {
@@ -318,7 +318,7 @@ exports.deleteGeneratedAudio = async (req, res) => {
     const { id } = req.params;
     const userId = req.userId;
 
-    console.log('🗣️ Deleting audio:', id);
+    // console.log('🗣️ Deleting audio:', id);
 
     // Find the audio record
     const audioRecord = await prisma.audioLibrary.findUnique({
@@ -344,7 +344,7 @@ exports.deleteGeneratedAudio = async (req, res) => {
       where: { id: parseInt(id) },
     });
 
-    console.log('✅ Audio deleted successfully');
+    // console.log('✅ Audio deleted successfully');
 
     res.status(200).json({ message: 'Audio deleted successfully' });
   } catch (error) {

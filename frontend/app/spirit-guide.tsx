@@ -61,7 +61,7 @@ export default function SpiritGuideScreen() {
       // Get token directly
       const token = await getItem('userToken');
       if (!token) {
-        console.log('No auth token available, redirecting to login');
+        // console.log('No auth token available, redirecting to login');
         router.replace('/auth/login');
         return;
       }

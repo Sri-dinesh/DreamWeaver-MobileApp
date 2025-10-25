@@ -1,5 +1,4 @@
 import { useAuth } from '@/context/AuthContext';
-import { gradients, palette, radii, shadows, spacing, typography } from '@/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -31,14 +30,14 @@ export default function RegisterScreen() {
       return;
     }
 
-    // Basic email validation
+    // Email validation
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
       Alert.alert('Error', 'Please enter a valid email address');
       return;
     }
 
-    // Password strength validation
+    // Password validation
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+={}[\]|\\:;"'<>,.?/])[A-Za-z\d!@#$%^&*()_\-+={}[\]|\\:;"'<>,.?/]{8,}$/;
     if (!passwordRegex.test(password)) {
@@ -54,7 +53,7 @@ export default function RegisterScreen() {
     if (!usernameRegex.test(username)) {
       Alert.alert(
         'Invalid Username',
-        'Username must be 3-30 characters and can only contain letters, numbers, underscores, and hyphens'
+        'Username must be 3–30 characters and can only contain letters, numbers, underscores, and hyphens'
       );
       return;
     }
@@ -83,8 +82,9 @@ export default function RegisterScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
     >
+      {/* 💜 Purple Gradient Background */}
       <LinearGradient
-        colors={['#1e3a8a', '#3b82f6', '#60a5fa']}
+        colors={['#3b0a45', '#5b21b6', '#9333ea']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.container}
@@ -177,6 +177,7 @@ export default function RegisterScreen() {
                 lowercase, numbers, and special characters.
               </Text>
 
+              {/* 💜 Updated Purple Register Button */}
               <TouchableOpacity
                 style={[styles.registerButton, loading && styles.buttonDisabled]}
                 onPress={handleRegister}
@@ -186,12 +187,14 @@ export default function RegisterScreen() {
                   <ActivityIndicator color="white" size="small" />
                 ) : (
                   <LinearGradient
-                    colors={['#7C3AED', '#A855F7']}
+                    colors={['#9333ea', '#a855f7', '#d946ef']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.registerButtonGradient}
                   >
-                    <Text style={styles.registerButtonText}>Create Account</Text>
+                    <Text style={styles.registerButtonText}>
+                      Create Account
+                    </Text>
                   </LinearGradient>
                 )}
               </TouchableOpacity>
@@ -263,7 +266,6 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
-    backdropFilter: 'blur(10px)',
     marginBottom: 24,
   },
   inputContainer: {
@@ -322,40 +324,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  dividerText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 13,
-    fontWeight: '500',
-    marginHorizontal: 12,
-  },
-  socialButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  socialButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
-  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -368,7 +336,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   footerLink: {
-    color: 'white',
+    color: '#d8b4fe',
     fontSize: 14,
     fontWeight: '700',
     textDecorationLine: 'underline',

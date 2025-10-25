@@ -83,7 +83,7 @@ exports.getSharedDreams = async (req, res) => {
   try {
     const userId = req.userId;
 
-    console.log('📋 Fetching shared dreams for user:', userId);
+    // console.log('📋 Fetching shared dreams for user:', userId);
 
     // Get all friends of current user
     const friendships = await prisma.friendRequest.findMany({
@@ -111,7 +111,7 @@ exports.getSharedDreams = async (req, res) => {
         : friendship.sender_id;
     });
 
-    console.log('👥 Friends:', friendIds);
+    // console.log('👥 Friends:', friendIds);
 
     // Get dreams that are either:
     // 1. Public (visibility = 'public')
@@ -149,7 +149,7 @@ exports.getSharedDreams = async (req, res) => {
       orderBy: { timestamp: 'desc' },
     });
 
-    console.log('✅ Shared dreams fetched:', dreams.length);
+    // console.log('✅ Shared dreams fetched:', dreams.length);
 
     // Transform data for frontend
     const transformedDreams = dreams.map((dream) => ({

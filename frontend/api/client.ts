@@ -51,11 +51,11 @@ apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     // Log successful responses in development
     if (__DEV__) {
-      console.log(
-        `✅ API Success: ${response.config.method?.toUpperCase()} ${
-          response.config.url
-        }`
-      );
+      // console.log(
+      //   `✅ API Success: ${response.config.method?.toUpperCase()} ${
+      //     response.config.url
+      //   }`
+      // );
     }
     return response;
   },
@@ -148,9 +148,9 @@ async function handleUnauthorized() {
       storage.removeItem('refreshToken')
     ]);
     // Navigate to login screen - this would be handled by your navigation system
-    console.log('User logged out due to unauthorized access');
+    // console.log('User logged out due to unauthorized access');
   } catch (error) {
-    console.error('Error handling unauthorized access:', error);
+    // console.error('Error handling unauthorized access:', error);
   }
 }
 

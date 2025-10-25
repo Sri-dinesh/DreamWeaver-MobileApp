@@ -4,7 +4,7 @@
     "slug": "DreamWeaver",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/dreamweaverLogo1.png",
+    "icon": "./assets/images/MainLogo.jpg",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,7 +14,7 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/dreamweaverLogo1.png"
+      "favicon": "./assets/images/MainLogo.jpg"
     },
     "plugins": [
       "expo-router",

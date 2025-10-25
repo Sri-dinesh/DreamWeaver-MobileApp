@@ -121,8 +121,8 @@ exports.generateAffirmation = async (req, res) => {
   }
 
   try {
-    console.log("🤖 Generating affirmation with Gemini AI...");
-    console.log("Input:", text.substring(0, 50) + "...");
+    // console.log("🤖 Generating affirmation with Gemini AI...");
+    // console.log("Input:", text.substring(0, 50) + "...");
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -139,10 +139,10 @@ Generate only the affirmation, no explanation.`;
     const result = await model.generateContent(systemPrompt);
     const generatedAffirmation = result.response.text().trim();
 
-    console.log("✅ Affirmation generated:", generatedAffirmation);
+    // console.log("✅ Affirmation generated:", generatedAffirmation);
 
     // Convert to speech
-    console.log("🎤 Converting affirmation to speech...");
+    // console.log("🎤 Converting affirmation to speech...");
     let audioData = null;
 
     try {
@@ -151,10 +151,10 @@ Generate only the affirmation, no explanation.`;
         userId,
         "affirmation"
       );
-      console.log("✅ Audio generated and uploaded:", audioData.audioUrl);
+      // console.log("✅ Audio generated and uploaded:", audioData.audioUrl);
     } catch (ttsError) {
       console.error("⚠️  TTS conversion failed:", ttsError.message);
-      console.log("⚠️  Continuing without audio...");
+      // console.log("⚠️  Continuing without audio...");
       audioData = null;
     }
 
@@ -167,7 +167,7 @@ Generate only the affirmation, no explanation.`;
       },
     });
 
-    console.log("💾 Affirmation saved to database:", savedAffirmation.id);
+    // console.log("💾 Affirmation saved to database:", savedAffirmation.id);
 
     // If audio was generated, create AudioPrompt record (matches schema)
     if (audioData) {
@@ -182,7 +182,7 @@ Generate only the affirmation, no explanation.`;
             timestamp: new Date(),
           },
         });
-        console.log("💾 Audio record saved to database");
+        // console.log("💾 Audio record saved to database");
       } catch (audioError) {
         console.error("⚠️  Error saving audio record:", audioError.message);
       }
@@ -217,8 +217,8 @@ exports.generatePrompt = async (req, res) => {
   }
 
   try {
-    console.log("🤖 Generating prompt with Gemini AI...");
-    console.log("Type:", promptType, "Theme:", theme);
+    // console.log("🤖 Generating prompt with Gemini AI...");
+    // console.log("Type:", promptType, "Theme:", theme);
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -235,10 +235,10 @@ exports.generatePrompt = async (req, res) => {
     const result = await model.generateContent(systemPrompt);
     const generatedPrompt = result.response.text().trim();
 
-    console.log("✅ Prompt generated:", generatedPrompt);
+    // console.log("✅ Prompt generated:", generatedPrompt);
 
     // Convert to speech
-    console.log("🎤 Converting prompt to speech...");
+    // console.log("🎤 Converting prompt to speech...");
     let audioData = null;
 
     try {
@@ -247,10 +247,10 @@ exports.generatePrompt = async (req, res) => {
         userId,
         promptType
       );
-      console.log("✅ Audio generated and uploaded:", audioData.audioUrl);
+      // console.log("✅ Audio generated and uploaded:", audioData.audioUrl);
     } catch (ttsError) {
       console.error("⚠️  TTS conversion failed:", ttsError.message);
-      console.log("⚠️  Continuing without audio...");
+      // console.log("⚠️  Continuing without audio...");
       audioData = null;
     }
 
@@ -263,7 +263,7 @@ exports.generatePrompt = async (req, res) => {
       },
     });
 
-    console.log("💾 Prompt saved to database:", savedPrompt.id);
+    // console.log("💾 Prompt saved to database:", savedPrompt.id);
 
     // If audio was generated, create AudioPrompt record
     if (audioData) {
@@ -278,7 +278,7 @@ exports.generatePrompt = async (req, res) => {
             timestamp: new Date(),
           },
         });
-        console.log("💾 Audio record saved to database");
+        // console.log("💾 Audio record saved to database");
       } catch (audioError) {
         console.error("⚠️  Error saving audio record:", audioError.message);
       }
@@ -308,7 +308,7 @@ exports.getPromptHistory = async (req, res) => {
   const userId = req.userId;
 
   try {
-    console.log("📋 Fetching prompt history for user:", userId);
+    // console.log("📋 Fetching prompt history for user:", userId);
 
     const prompts = await prisma.aIPrompt.findMany({
       where: { user_id: userId },
@@ -316,7 +316,7 @@ exports.getPromptHistory = async (req, res) => {
       take: 100,
     });
 
-    console.log("✅ Retrieved", prompts.length, "prompts");
+    // console.log("✅ Retrieved", prompts.length, "prompts");
 
     // Get associated audio files with full URLs
     const audioPrompts = await prisma.audioPrompt.findMany({
@@ -346,7 +346,7 @@ exports.getPromptHistory = async (req, res) => {
       }
 
       const audioUrl = audioMap[prompt.id];
-      console.log(`📝 Prompt ${prompt.id} (type: ${type}) audio URL:`, audioUrl);
+      // console.log(`📝 Prompt ${prompt.id} (type: ${type}) audio URL:`, audioUrl);
 
       return {
         id: prompt.id,
@@ -398,7 +398,7 @@ exports.deletePrompt = async (req, res) => {
     for (const audio of audioPrompts) {
       try {
         await ttsService.deleteAudioFile(audio.file_path);
-        console.log("✅ Audio file deleted:", audio.file_path);
+        // console.log("✅ Audio file deleted:", audio.file_path);
       } catch (error) {
         console.error("⚠️  Error deleting audio file:", error);
       }
@@ -414,7 +414,7 @@ exports.deletePrompt = async (req, res) => {
       where: { id: parseInt(id) },
     });
 
-    console.log("🗑️  Prompt deleted:", id);
+    // console.log("🗑️  Prompt deleted:", id);
 
     res.status(200).json({ message: "Prompt deleted successfully" });
   } catch (error) {

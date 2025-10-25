@@ -191,9 +191,9 @@ export default function LucidTrainerScreen() {
 
     try {
       if (scheduledNotifId) {
-        console.log(
-          `Cancelling existing notification with ID: ${scheduledNotifId}`
-        );
+        // console.log(
+        //   `Cancelling existing notification with ID: ${scheduledNotifId}`
+        // );
         await Notifications.cancelScheduledNotificationAsync(scheduledNotifId);
         setScheduledNotifId(null);
       }
@@ -204,7 +204,7 @@ export default function LucidTrainerScreen() {
         repeats: true,
       } as const;
 
-      console.log(`Scheduling new notification every ${minutes} minutes.`);
+      // console.log(`Scheduling new notification every ${minutes} minutes.`);
       const id = await Notifications.scheduleNotificationAsync({
         content: {
           title: 'Reality Check',

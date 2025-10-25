@@ -18,7 +18,7 @@ class SupabaseStorageService {
         return null;
       }
 
-      console.log(`📤 Uploading ${fileName} to Supabase...`);
+      // console.log(`📤 Uploading ${fileName} to Supabase...`);
 
       // Create file path with user context if available
       const filePath = `audio-generators/${fileName}`;
@@ -36,7 +36,7 @@ class SupabaseStorageService {
         return null;
       }
 
-      console.log('✅ File uploaded to Supabase:', filePath);
+      // console.log('✅ File uploaded to Supabase:', filePath);
 
       // Get public URL
       const { data: publicUrlData } = supabase.storage
@@ -49,7 +49,7 @@ class SupabaseStorageService {
         fileName,
       };
     } catch (error) {
-      console.error('❌ Error uploading to Supabase:', error);
+      // console.error('❌ Error uploading to Supabase:', error);
       return null;
     }
   }
@@ -62,7 +62,7 @@ class SupabaseStorageService {
         return false;
       }
 
-      console.log(`🗑️ Deleting ${filePath} from Supabase...`);
+      // console.log(`🗑️ Deleting ${filePath} from Supabase...`);
 
       const { error } = await supabase.storage
         .from(this.bucketName)
@@ -73,7 +73,7 @@ class SupabaseStorageService {
         return false;
       }
 
-      console.log('✅ File deleted from Supabase:', filePath);
+      // console.log('✅ File deleted from Supabase:', filePath);
       return true;
     } catch (error) {
       console.error('❌ Error deleting from Supabase:', error);

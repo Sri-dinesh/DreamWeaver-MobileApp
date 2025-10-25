@@ -43,8 +43,8 @@ exports.discoverUsers = async (req, res) => {
     const currentUserId = req.userId;
     const { search = "" } = req.query;
 
-    console.log("Discovering users for:", currentUserId);
-    console.log("Search query:", search);
+    // console.log("Discovering users for:", currentUserId);
+    // console.log("Search query:", search);
 
     // Get all users except the current user
     const users = await prisma.user.findMany({
@@ -77,7 +77,7 @@ exports.discoverUsers = async (req, res) => {
       take: 50,
     });
 
-    console.log("Found users:", users.length);
+    // console.log("Found users:", users.length);
 
     // Format response to include friendship status
     const formattedUsers = users.map((user) => ({
@@ -89,7 +89,7 @@ exports.discoverUsers = async (req, res) => {
       isFollowing: user.following.some((f) => f.id === currentUserId),
     }));
 
-    console.log("Formatted users:", formattedUsers.length);
+    // console.log("Formatted users:", formattedUsers.length);
 
     res.status(200).json(formattedUsers);
   } catch (error) {
@@ -109,12 +109,12 @@ exports.getUserProfile = async (req, res) => {
     const { userId } = req.params;
     const currentUserId = req.userId;
 
-    console.log(
-      "Fetching user profile:",
-      userId,
-      "for current user:",
-      currentUserId
-    );
+    // console.log(
+    //   "Fetching user profile:",
+    //   userId,
+    //   "for current user:",
+    //   currentUserId
+    // );
 
     if (!userId) {
       return res.status(400).json({ message: "User ID is required" });
@@ -150,11 +150,11 @@ exports.getUserProfile = async (req, res) => {
     });
 
     if (!user) {
-      console.log("User not found:", userId);
+      // console.log("User not found:", userId);
       return res.status(404).json({ message: "User not found" });
     }
 
-    console.log("User found:", user.username);
+    // console.log("User found:", user.username);
 
     const formattedUser = {
       id: user.id,

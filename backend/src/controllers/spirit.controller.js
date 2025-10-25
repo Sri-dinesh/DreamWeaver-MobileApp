@@ -98,7 +98,7 @@ exports.sendMessage = async (req, res) => {
   try {
     message = sanitizeInput(message);
 
-    console.log(`[DEBUG] Received message from user ${userId}: Length ${message.length}`);
+    // console.log(`[DEBUG] Received message from user ${userId}: Length ${message.length}`);
 
     // Get previous messages for context (up to N, e.g., 5)
     const prevMessages = await prisma.spiritGuideChat.findMany({
@@ -111,7 +111,7 @@ exports.sendMessage = async (req, res) => {
       },
     });
 
-    console.log(`[DEBUG] Retrieved ${prevMessages.length} previous messages for context.`);
+    // console.log(`[DEBUG] Retrieved ${prevMessages.length} previous messages for context.`);
 
     let historyContext = "";
     if (prevMessages.length > 0) {
@@ -227,7 +227,7 @@ exports.clearChatHistory = async (req, res) => {
       where: { user_id: userId }, // Crucial: filter by authenticated user ID
     });
 
-    console.log(`[DEBUG] Cleared ${deleteResult.count} chat messages for user ${userId}.`);
+    // console.log(`[DEBUG] Cleared ${deleteResult.count} chat messages for user ${userId}.`);
 
     res.status(200).json({ message: "Chat history cleared successfully" });
   } catch (deleteError) {

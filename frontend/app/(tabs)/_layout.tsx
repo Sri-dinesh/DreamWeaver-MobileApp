@@ -9,7 +9,7 @@ export default function TabLayout() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      console.log('Not authenticated, redirecting to landing');
+      // console.log('Not authenticated, redirecting to landing');
       router.replace('/');
     }
   }, [isAuthenticated]);

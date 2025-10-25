@@ -8,10 +8,10 @@ const prismaClient = new prisma.PrismaClient();
 // Upload audio file to Supabase storage and save metadata to database
 const uploadAudio = async (req, res) => {
   try {
-    console.log('Upload audio request received');
-    console.log('Request body:', req.body);
-    console.log('Request file:', req.file);
-    console.log('User ID:', req.userId);
+    // console.log('Upload audio request received');
+    // console.log('Request body:', req.body);
+    // console.log('Request file:', req.file);
+    // console.log('User ID:', req.userId);
     
     // Validate Supabase connection
     if (!supabase) {
@@ -31,7 +31,7 @@ const uploadAudio = async (req, res) => {
         if (!audioLibBucket) {
           console.warn('Audio-Lib bucket not found. Please create it in your Supabase storage.');
         } else {
-          console.log('Audio-Lib bucket found:', audioLibBucket);
+          // console.log('Audio-Lib bucket found:', audioLibBucket);
         }
       }
       
@@ -45,7 +45,7 @@ const uploadAudio = async (req, res) => {
         console.error('Supabase connection test failed:', error);
       }
     } catch (testError) {
-      console.log('Supabase connection test completed');
+      // console.log('Supabase connection test completed');
     }
     
     const { title, description, category, visibility } = req.body;
@@ -53,7 +53,7 @@ const uploadAudio = async (req, res) => {
     
     // Check for base64 data approach (new method)
     if (req.body && req.body.data && req.body.fileName) {
-      console.log('Found base64 data approach');
+      // console.log('Found base64 data approach');
       // Handle base64 file upload
       try {
         const { fileName, mimeType, data, title, description, category, visibility } = req.body;
@@ -63,7 +63,7 @@ const uploadAudio = async (req, res) => {
         
         // Upload to Supabase storage
         const supabaseFileName = `${user_id}/${Date.now()}-${fileName}`;
-        console.log('Uploading base64 file to Supabase with filename:', supabaseFileName);
+        // console.log('Uploading base64 file to Supabase with filename:', supabaseFileName);
         
         const { data: uploadData, error } = await supabase.storage
           .from('Audio-Lib')
@@ -88,14 +88,14 @@ const uploadAudio = async (req, res) => {
           return res.status(500).json({ error: "Failed to upload audio file to storage: " + (error.message || 'Unknown error') });
         }
         
-        console.log('Supabase upload successful:', uploadData);
+        // console.log('Supabase upload successful:', uploadData);
         
         // Get public URL for the file
         const { data: { publicUrl } } = supabase.storage
           .from('Audio-Lib')
           .getPublicUrl(supabaseFileName);
         
-        console.log('Public URL generated:', publicUrl);
+        // console.log('Public URL generated:', publicUrl);
         
         // Save to database
         const audioFile = await prismaClient.audioLibrary.create({
@@ -113,7 +113,7 @@ const uploadAudio = async (req, res) => {
           }
         });
         
-        console.log('Database record created:', audioFile.id);
+        // console.log('Database record created:', audioFile.id);
         
         return res.status(201).json({ 
           message: "Audio uploaded successfully", 
@@ -127,24 +127,24 @@ const uploadAudio = async (req, res) => {
     
     // Handle traditional multer file upload (fallback)
     if (!req.file) {
-      console.log('No file provided in request');
-      console.log('Checking other possible file properties:');
-      console.log('req.files:', req.files);
-      console.log('req.body:', req.body);
-      console.log('All request keys:', Object.keys(req));
-      console.log('Content-Type header:', req.headers['content-type']);
-      console.log('Content-Length header:', req.headers['content-length']);
+      // console.log('No file provided in request');
+      // console.log('Checking other possible file properties:');
+      // console.log('req.files:', req.files);
+      // console.log('req.body:', req.body);
+      // console.log('All request keys:', Object.keys(req));
+      // console.log('Content-Type header:', req.headers['content-type']);
+      // console.log('Content-Length header:', req.headers['content-length']);
       
       // In some cases, React Native might send the file differently
       if (req.body && req.body.audio) {
-        console.log('Found audio in body, but it should be in req.file');
-        console.log('Body audio content type:', typeof req.body.audio);
-        console.log('Body audio content:', req.body.audio);
-        console.log('Body audio content keys:', Object.keys(req.body.audio));
+        // console.log('Found audio in body, but it should be in req.file');
+        // console.log('Body audio content type:', typeof req.body.audio);
+        // console.log('Body audio content:', req.body.audio);
+        // console.log('Body audio content keys:', Object.keys(req.body.audio));
         
         // Check if it's a React Native file object
         if (req.body.audio.uri && req.body.audio.type && req.body.audio.name) {
-          console.log('This looks like a React Native file object, but multer should have processed it');
+          // console.log('This looks like a React Native file object, but multer should have processed it');
           return res.status(400).json({ 
             error: "File not properly attached. Multer didn't process the file. Check if the file URI is accessible and the format is correct." 
           });
@@ -159,24 +159,24 @@ const uploadAudio = async (req, res) => {
       return res.status(400).json({ error: "No audio file provided. Please make sure you've selected a file and try again." });
     }
     
-    console.log('File details:', {
-      originalname: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size
-    });
+    // console.log('File details:', {
+    //   originalname: req.file.originalname,
+    //   mimetype: req.file.mimetype,
+    //   size: req.file.size
+    // });
     
     // Upload to Supabase storage
     const fileName = `${user_id}/${Date.now()}-${req.file.originalname}`;
-    console.log('Uploading to Supabase with filename:', fileName);
-    console.log('File buffer type:', typeof req.file.buffer);
-    console.log('File buffer length:', req.file.buffer.length);
+    // console.log('Uploading to Supabase with filename:', fileName);
+    // console.log('File buffer type:', typeof req.file.buffer);
+    // console.log('File buffer length:', req.file.buffer.length);
     
     // Ensure we have the right format for Supabase
     let fileBuffer = req.file.buffer;
     
     // If buffer is not an ArrayBuffer or Uint8Array, convert it
     if (Buffer.isBuffer(req.file.buffer)) {
-      console.log('Converting Buffer to ArrayBuffer');
+      // console.log('Converting Buffer to ArrayBuffer');
       fileBuffer = req.file.buffer.buffer.slice(
         req.file.buffer.byteOffset, 
         req.file.buffer.byteOffset + req.file.buffer.byteLength
@@ -206,14 +206,14 @@ const uploadAudio = async (req, res) => {
       return res.status(500).json({ error: "Failed to upload audio file to storage: " + (error.message || 'Unknown error') });
     }
     
-    console.log('Supabase upload successful:', data);
+    // console.log('Supabase upload successful:', data);
     
     // Get public URL for the file
     const { data: { publicUrl } } = supabase.storage
       .from('Audio-Lib')
       .getPublicUrl(fileName);
     
-    console.log('Public URL generated:', publicUrl);
+    // console.log('Public URL generated:', publicUrl);
     
     // Save metadata to database
     const audioEntry = await prismaClient.audioLibrary.create({
@@ -231,7 +231,7 @@ const uploadAudio = async (req, res) => {
       }
     });
     
-    console.log('Database entry created:', audioEntry);
+    // console.log('Database entry created:', audioEntry);
     
     res.status(201).json({
       message: "Audio uploaded successfully",
@@ -246,9 +246,9 @@ const uploadAudio = async (req, res) => {
 // Get all audio files for a user
 const getUserAudio = async (req, res) => {
   try {
-    console.log('Get user audio request received');
-    console.log('User ID:', req.userId);
-    console.log('Query params:', req.query);
+    // console.log('Get user audio request received');
+    // console.log('User ID:', req.userId);
+    // console.log('Query params:', req.query);
     
     const user_id = req.userId;
     const { category, visibility } = req.query;
@@ -263,7 +263,7 @@ const getUserAudio = async (req, res) => {
       whereClause.visibility = visibility;
     }
     
-    console.log('Where clause:', whereClause);
+    // console.log('Where clause:', whereClause);
     
     const audioFiles = await prismaClient.audioLibrary.findMany({
       where: whereClause,
@@ -272,7 +272,7 @@ const getUserAudio = async (req, res) => {
       }
     });
     
-    console.log('Found audio files:', audioFiles.length);
+    // console.log('Found audio files:', audioFiles.length);
     
     res.json(audioFiles);
   } catch (error) {

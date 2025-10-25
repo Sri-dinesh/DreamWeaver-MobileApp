@@ -24,24 +24,24 @@ const upload = multer({
 
 // Upload audio file - apply multer before authentication
 router.post("/upload", (req, res, next) => {
-  console.log('=== Upload Request Received ===');
-  console.log('Headers:', req.headers);
-  console.log('Content-Type:', req.headers['content-type']);
-  console.log('Content-Length:', req.headers['content-length']);
-  console.log('Body keys:', Object.keys(req.body || {}));
-  console.log('Files keys:', req.files ? Object.keys(req.files) : 'No files');
+  // console.log('=== Upload Request Received ===');
+  // console.log('Headers:', req.headers);
+  // console.log('Content-Type:', req.headers['content-type']);
+  // console.log('Content-Length:', req.headers['content-length']);
+  // console.log('Body keys:', Object.keys(req.body || {}));
+  // console.log('Files keys:', req.files ? Object.keys(req.files) : 'No files');
   next();
 }, upload.single('audio'), (req, res, next) => {
-  console.log('=== After Multer Processing ===');
-  console.log('Multer processed file:', req.file);
-  console.log('Multer processed body:', req.body);
+  // console.log('=== After Multer Processing ===');
+  // console.log('Multer processed file:', req.file);
+  // console.log('Multer processed body:', req.body);
   if (!req.file) {
-    console.log('WARNING: No file found after multer processing');
-    console.log('All request properties:', Object.keys(req));
-    console.log('Request body:', req.body);
+    // console.log('WARNING: No file found after multer processing');
+    // console.log('All request properties:', Object.keys(req));
+    // console.log('Request body:', req.body);
     // Check if file might be in a different field
     if (req.body && req.body.audio) {
-      console.log('Found audio in body:', typeof req.body.audio, req.body.audio);
+      // console.log('Found audio in body:', typeof req.body.audio, req.body.audio);
     }
   }
   next();

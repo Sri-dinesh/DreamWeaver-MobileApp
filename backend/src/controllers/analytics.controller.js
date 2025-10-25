@@ -26,9 +26,9 @@ const getDreamConsistency = async (req, res) => {
     const avgDiff = timeDiffs.reduce((a, b) => a + b, 0) / timeDiffs.length;
     const consistency = 1 / (1 + avgDiff);
 
-    console.log(
-      `✅ Dream consistency calculated for user ${req.userId}: ${consistency}`
-    );
+    // console.log(
+    //   `✅ Dream consistency calculated for user ${req.userId}: ${consistency}`
+    // );
     res.status(200).json({ consistency });
   } catch (error) {
     console.error("❌ Error calculating dream consistency:", error);

@@ -10,7 +10,7 @@ exports.getGeneratedAudioHistory = async (req, res) => {
   try {
     const userId = req.userId;
 
-    console.log('📋 Fetching generated audio history for user:', userId);
+    // console.log('📋 Fetching generated audio history for user:', userId);
 
     const audioHistory = await prisma.audioGeneration.findMany({
       where: { user_id: userId },
@@ -29,7 +29,7 @@ exports.getGeneratedAudioHistory = async (req, res) => {
       },
     });
 
-    console.log('✅ Audio history fetched:', audioHistory.length, 'items');
+    // console.log('✅ Audio history fetched:', audioHistory.length, 'items');
 
     res.status(200).json(audioHistory);
   } catch (error) {
@@ -49,7 +49,7 @@ exports.deleteGeneratedAudio = async (req, res) => {
     const { id } = req.params;
     const userId = req.userId;
 
-    console.log('🗑️ Deleting audio:', id);
+    // console.log('🗑️ Deleting audio:', id);
 
     // Find the audio record
     const audioRecord = await prisma.audioGeneration.findUnique({
@@ -75,7 +75,7 @@ exports.deleteGeneratedAudio = async (req, res) => {
       where: { id: parseInt(id) },
     });
 
-    console.log('✅ Audio deleted successfully');
+    // console.log('✅ Audio deleted successfully');
 
     res.status(200).json({ message: 'Audio deleted successfully' });
   } catch (error) {

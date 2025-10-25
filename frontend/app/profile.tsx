@@ -151,7 +151,7 @@ export default function ProfileScreen() {
                   resizeMode="cover"
                   onError={() => {
                     // If image fails to load, it will fall back to default
-                    console.log('Failed to load profile image');
+                    // console.log('Failed to load profile image');
                   }}
                 />
               </View>

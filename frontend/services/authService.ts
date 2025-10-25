@@ -6,7 +6,7 @@ const TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 const USER_KEY = 'user_data';
 
-// Use SecureStore for sensitive data on native platforms, AsyncStorage for web
+// Secure abstraction layer for native vs web
 const secureStorage = {
   async setItem(key: string, value: string): Promise<void> {
     if (Platform.OS === 'web') {
@@ -34,7 +34,7 @@ const secureStorage = {
 };
 
 export const authService = {
-  // Store auth tokens securely
+  /** 🔒 Store auth tokens securely */
   async storeTokens(accessToken: string, refreshToken?: string): Promise<void> {
     try {
       await secureStorage.setItem(TOKEN_KEY, accessToken);
@@ -47,7 +47,7 @@ export const authService = {
     }
   },
 
-  // Retrieve access token
+  /** 🔐 Retrieve access token */
   async getAccessToken(): Promise<string | null> {
     try {
       return await secureStorage.getItem(TOKEN_KEY);
@@ -57,7 +57,7 @@ export const authService = {
     }
   },
 
-  // Retrieve refresh token
+  /** 🔐 Retrieve refresh token */
   async getRefreshToken(): Promise<string | null> {
     try {
       return await secureStorage.getItem(REFRESH_TOKEN_KEY);
@@ -67,17 +67,25 @@ export const authService = {
     }
   },
 
-  // Store user data
+  /** 🧹 Store *only non-sensitive* user data */
   async storeUserData(userData: any): Promise<void> {
     try {
-      await AsyncStorage.setItem(USER_KEY, JSON.stringify(userData));
+      // ✅ Only keep fields that are safe to persist
+      const safeData = {
+        id: userData?.id,
+        username: userData?.username,
+        avatar: userData?.avatar || null,
+        preferences: userData?.preferences || null,
+      };
+
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(safeData));
     } catch (error) {
       console.error('Error storing user data:', error);
       throw new Error('Failed to store user data');
     }
   },
 
-  // Retrieve user data
+  /** 🧾 Retrieve stored user data (non-sensitive only) */
   async getUserData(): Promise<any | null> {
     try {
       const userData = await AsyncStorage.getItem(USER_KEY);
@@ -88,7 +96,7 @@ export const authService = {
     }
   },
 
-  // Clear all auth data
+  /** 🧼 Clear all stored auth + user data */
   async clearAuthData(): Promise<void> {
     try {
       await Promise.all([
@@ -102,7 +110,7 @@ export const authService = {
     }
   },
 
-  // Check if user is authenticated
+  /** ✅ Check authentication status */
   async isAuthenticated(): Promise<boolean> {
     try {
       const token = await this.getAccessToken();

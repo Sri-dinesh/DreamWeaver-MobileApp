@@ -1,5 +1,4 @@
 import { useAuth } from '@/context/AuthContext';
-import { gradients, palette, radii, shadows, spacing, typography } from '@/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -33,7 +32,6 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login(email, password);
-      console.log('Login successful');
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -54,8 +52,9 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
     >
+      {/* 🌌 Purple Gradient Background */}
       <LinearGradient
-        colors={['#1e3a8a', '#3b82f6', '#60a5fa']}
+        colors={['#3b0a45', '#5b21b6', '#9333ea']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.container}
@@ -134,6 +133,7 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </View>
 
+              {/* 💜 Updated Purple Gradient Button */}
               <TouchableOpacity
                 style={[styles.loginButton, loading && styles.buttonDisabled]}
                 onPress={handleLogin}
@@ -143,7 +143,7 @@ export default function LoginScreen() {
                   <ActivityIndicator color="white" size="small" />
                 ) : (
                   <LinearGradient
-                    colors={['#7C3AED', '#A855F7']}
+                    colors={['#9333ea', '#a855f7', '#d946ef']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.loginButtonGradient}
@@ -220,7 +220,6 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
-    backdropFilter: 'blur(10px)',
     marginBottom: 24,
   },
   inputContainer: {
@@ -255,7 +254,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   forgotPasswordText: {
-    color: '#7C3AED',
+    color: '#ffffffff',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -280,40 +279,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  dividerText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 13,
-    fontWeight: '500',
-    marginHorizontal: 12,
-  },
-  socialButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  socialButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
-  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -326,7 +291,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   footerLink: {
-    color: 'white',
+    color: '#d8b4fe',
     fontSize: 14,
     fontWeight: '700',
     textDecorationLine: 'underline',

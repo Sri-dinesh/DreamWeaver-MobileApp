@@ -55,10 +55,10 @@ export default function UserProfileScreen() {
   const getToken = async () => {
     try {
       const token = await getItem('userToken');
-      console.log(
-        '📱 Token retrieved:',
-        token ? `${token.substring(0, 20)}...` : 'null'
-      );
+      // console.log(
+      //   '📱 Token retrieved:',
+      //   token ? `${token.substring(0, 20)}...` : 'null'
+      // );
       return token;
     } catch (error) {
       console.error('❌ Error getting token:', error);
@@ -73,7 +73,7 @@ export default function UserProfileScreen() {
       const token = await getToken();
 
       if (!token) {
-        console.log('❌ No token found, redirecting to login');
+        // console.log('❌ No token found, redirecting to login');
         Alert.alert(
           'Authentication Required',
           'Please login to view profiles',
@@ -95,8 +95,8 @@ export default function UserProfileScreen() {
       }
 
       const url = `${API_URL}/api/users/${id}`;
-      console.log('🔗 Fetching user profile from:', url);
-      console.log('📨 Sending request with token');
+      // console.log('🔗 Fetching user profile from:', url);
+      // console.log('📨 Sending request with token');
 
       const response = await axios.get(url, {
         headers: {
@@ -105,15 +105,15 @@ export default function UserProfileScreen() {
         },
       });
 
-      console.log('✅ User profile response received:', response.data);
+      // console.log('✅ User profile response received:', response.data);
       setProfile(response.data);
       setIsFollowing(response.data.isFollowing);
     } catch (error: any) {
       console.error('❌ Error fetching user profile:', error);
 
       if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
+        // console.error('Response status:', error.response.status);
+        // console.error('Response data:', error.response.data);
 
         if (error.response.status === 401) {
           Alert.alert(
@@ -281,7 +281,7 @@ export default function UserProfileScreen() {
               key={dream.id}
               style={styles.dreamCard}
               onPress={() => {
-                console.log('Navigating to dream:', dream.id);
+                // console.log('Navigating to dream:', dream.id);
                 router.push({
                   pathname: '/dream-detail/[id]',
                   params: { id: dream.id },

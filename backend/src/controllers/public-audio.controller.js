@@ -3,7 +3,7 @@ const supabase = require("../config/supabase");
 // Get public audio files from the "Music" folder in Supabase storage
 const getPublicAudioFiles = async (req, res) => {
   try {
-    console.log('Get public audio files request received');
+    // console.log('Get public audio files request received');
     
     // List all files in the "Music" folder
     const { data: files, error } = await supabase.storage
@@ -17,7 +17,7 @@ const getPublicAudioFiles = async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch public audio files' });
     }
     
-    console.log('Found public audio files:', files?.length || 0);
+    // console.log('Found public audio files:', files?.length || 0);
     
     // If no files found, return empty array
     if (!files || files.length === 0) {

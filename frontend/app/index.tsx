@@ -15,7 +15,8 @@ import { gradients, palette, radii, spacing, typography } from '@/theme';
 export default function LandingPage() {
   const { isAuthenticated } = useAuth();
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
   React.useEffect(() => {
     if (isAuthenticated) {
@@ -27,22 +28,29 @@ export default function LandingPage() {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 600,
+        duration: 800,
         useNativeDriver: true,
       }),
       Animated.spring(slideAnim, {
         toValue: 0,
-        damping: 16,
+        damping: 14,
         mass: 1,
-        stiffness: 120,
+        stiffness: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 800,
         useNativeDriver: true,
       }),
     ]).start();
-  }, [fadeAnim, slideAnim]);
+  }, [fadeAnim, slideAnim, scaleAnim]);
 
   return (
     <LinearGradient
-      colors={gradients.header}
+      colors={['#e8e8f0', '#f5f3fb', '#e8e8f0']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
       style={styles.container}
     >
       <Animated.View
@@ -50,49 +58,61 @@ export default function LandingPage() {
           styles.content,
           {
             opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
+            transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
           },
         ]}
       >
-        <View style={styles.logoContainer}>
-          <View style={styles.logoHalo}>
-            <LinearGradient
-              colors={gradients.cardAccent}
-              style={styles.logoBackdrop}
-            />
-            <Image
-              source={require('@/assets/images/dreamweaverLogo2.png')}
-              style={styles.logo}
-            />
-          </View>
-          <Text style={styles.title}>DreamWeaver</Text>
-          <Text style={styles.subtitle}>Improve Mental Wellbeing</Text>
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.push('/auth/login')}
+        <View style={styles.cardWrapper}>
+          <LinearGradient
+            colors={['#ffffff', '#faf8ff']}
+            style={styles.card}
           >
-            <LinearGradient
-              colors={gradients.buttonPrimary}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.primaryButtonInner}
-            >
-              <Text style={styles.primaryButtonText}>Sign In</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+            {/* Logo Section */}
+            <View style={styles.logoSection}>
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require('@/assets/images/MainLogoNoBG.png')}
+                  style={styles.logo}
+                />
+              </View>
+            </View>
 
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => router.push('/auth/register')}
-          >
-            <Text style={styles.secondaryButtonText}>Create Account</Text>
-          </TouchableOpacity>
+            {/* Text Section */}
+            <View style={styles.textSection}>
+              <Text style={styles.mainTitle}>DreamWeaver</Text>
+              <Text style={styles.tagline}>Improve Mental Wellbeing</Text>
+              <Text style={styles.description}>
+                Unlock the mysteries of your dreams
+              </Text>
+            </View>
+
+            {/* Buttons Section */}
+            <View style={styles.buttonSection}>
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => router.push('/auth/login')}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={['#5c6eb8', '#3d4a8f']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.primaryButtonGradient}
+                >
+                  <Text style={styles.primaryButtonText}>Get Started</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {/* <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => router.push('/auth/register')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.secondaryButtonText}>Create Account</Text>
+              </TouchableOpacity> */}
+            </View>
+          </LinearGradient>
         </View>
-
-        <Text style={styles.footer}>Unlock the mysteries of your dreams</Text>
       </Animated.View>
     </LinearGradient>
   );
@@ -101,86 +121,108 @@ export default function LandingPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
   },
   content: {
-    flex: 1,
-    justifyContent: 'center',
+    width: '100%',
+    maxWidth: 360,
+  },
+  cardWrapper: {
+    borderRadius: 32,
+    overflow: 'hidden',
+    elevation: 12,
+    shadowColor: 'rgba(93, 110, 184, 0.2)',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.3,
+    shadowRadius: 28,
+  },
+  card: {
+    paddingVertical: spacing.xxxl,
+    paddingHorizontal: spacing.xl,
     alignItems: 'center',
-    padding: spacing.xl,
+  },
+  logoSection: {
+    marginBottom: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logoContainer: {
-    alignItems: 'center',
-    marginBottom: spacing.xxxl,
-    gap: spacing.md,
-  },
-  logoHalo: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    padding: spacing.sm,
-  },
-  logoBackdrop: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: 110,
-    opacity: 0.7,
+    position: 'relative',
   },
   logo: {
-    width: 180,
-    height: 180,
+    width: 200,
+    height: 200,
     resizeMode: 'contain',
   },
-  title: {
-    ...typography.display,
-    fontSize: 34,
-    color: 'white',
-    textShadowColor: 'rgba(0,0,0,0.15)',
-    textShadowOffset: { width: 0, height: 8 },
-    textShadowRadius: 16,
+  textSection: {
+    alignItems: 'center',
+    marginBottom: spacing.xxxl,
+    gap: spacing.sm,
   },
-  subtitle: {
-    ...typography.body,
-    color: 'rgba(255, 255, 255, 0.78)',
-    textAlign: 'center',
+  mainTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1a1a2e',
+    letterSpacing: -0.5,
   },
-  buttonContainer: {
+  tagline: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#5c6eb8',
+    marginTop: spacing.xs,
+  },
+  description: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#8a92bd',
+    marginTop: spacing.sm,
+    fontStyle: 'italic',
+  },
+  buttonSection: {
     width: '100%',
     gap: spacing.md,
   },
   primaryButton: {
-    borderRadius: radii.lg,
+    borderRadius: 16,
     overflow: 'hidden',
+    elevation: 6,
+    shadowColor: 'rgba(93, 110, 184, 0.3)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
   },
-  primaryButtonInner: {
+  primaryButtonGradient: {
     paddingVertical: spacing.md,
-    borderRadius: radii.lg,
+    borderRadius: 16,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   primaryButtonText: {
-    ...typography.subheading,
+    fontSize: 16,
+    fontWeight: '600',
     color: 'white',
+    letterSpacing: 0.3,
   },
   secondaryButton: {
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-    borderRadius: radii.lg,
+    borderColor: '#d8d5e8',
+    borderRadius: 16,
     paddingVertical: spacing.md,
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
   },
   secondaryButtonText: {
-    ...typography.subheading,
-    color: 'white',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: spacing.xxxl,
-    color: 'rgba(255, 255, 255, 0.7)',
-    ...typography.bodySecondary,
-    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#5c6eb8',
+    letterSpacing: 0.3,
   },
 });

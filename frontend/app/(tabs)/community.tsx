@@ -69,7 +69,7 @@ export default function CommunityScreen() {
 
       const headers = { Authorization: `Bearer ${token}` };
 
-      console.log('🔗 Fetching all data...');
+      // console.log('🔗 Fetching all data...');
 
       // Fetch all data in parallel
       const [dreamsRes, usersRes, requestsRes] = await Promise.all([
@@ -78,9 +78,9 @@ export default function CommunityScreen() {
         axios.get(`${API_URL}/api/friends/requests/received`, { headers }),
       ]);
 
-      console.log('✅ Dreams fetched:', dreamsRes.data.length);
-      console.log('✅ Users fetched:', usersRes.data.length);
-      console.log('✅ Requests fetched:', requestsRes.data.data?.length);
+      // console.log('✅ Dreams fetched:', dreamsRes.data.length);
+      // console.log('✅ Users fetched:', usersRes.data.length);
+      // console.log('✅ Requests fetched:', requestsRes.data.data?.length);
 
       setSharedDreams(dreamsRes.data || []);
       setReceivedRequests(requestsRes.data.data || []);
@@ -137,7 +137,7 @@ export default function CommunityScreen() {
         return;
       }
 
-      console.log('📤 Sending friend request to:', userId);
+      // console.log('📤 Sending friend request to:', userId);
 
       await axios.post(
         `${API_URL}/api/friends/request/${userId}`,
@@ -145,7 +145,7 @@ export default function CommunityScreen() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log('✅ Friend request sent');
+      // console.log('✅ Friend request sent');
 
       // Update local state
       setAllUsers((prevUsers) =>
