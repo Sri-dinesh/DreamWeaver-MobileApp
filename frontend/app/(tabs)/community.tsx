@@ -412,12 +412,12 @@ export default function CommunityScreen() {
               >
                 <TouchableOpacity
                   style={styles.userInfoContainer}
-                  onPress={() => {
-                    router.push({
-                      pathname: '/user-profile/[id]',
-                      params: { id: user.id },
-                    });
-                  }}
+                  // onPress={() => {
+                  //   router.push({
+                  //     pathname: '/user-profile/[id]',
+                  //     params: { id: user.id },
+                  //   });
+                  // }}
                 >
                   <View style={styles.avatar}>
                     <Text style={styles.avatarText}>

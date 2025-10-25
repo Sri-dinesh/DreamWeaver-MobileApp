@@ -9,7 +9,7 @@ let model = null;
 if (process.env.GEMINI_API_KEY) {
   genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-  console.log("Gemini API initialized successfully.");
+  // console.log("Gemini API initialized successfully.");
 } else {
   console.error("ERROR: GEMINI_API_KEY is not set in environment variables!");
   console.error("Please set GEMINI_API_KEY before starting the server.");
@@ -35,7 +35,7 @@ function sanitizeInput(input, maxLength = 1000) {
 // Sanitize output to prevent data leakage or unexpected content
 function sanitizeOutput(output, maxLength = 2000) {
   if (typeof output !== 'string') {
-    console.warn("Gemini API returned non-string response, using fallback.");
+    // console.warn("Gemini API returned non-string response, using fallback.");
     return "I sense a disturbance in the ethereal plane that prevents me from connecting fully. Perhaps we should try again when the cosmic energies are more aligned.";
   }
   return output.substring(0, maxLength);
@@ -149,7 +149,7 @@ exports.sendMessage = async (req, res) => {
 
     contents.push({ role: "user", parts: [{ text: message }] });
 
-    console.log(`[Gemini API Call] Sending ${contents.length} parts to Gemini for user ${userId}.`);
+    // console.log(`[Gemini API Call] Sending ${contents.length} parts to Gemini for user ${userId}.`);
 
     try {
       // Generate content using the model with history
@@ -163,7 +163,7 @@ exports.sendMessage = async (req, res) => {
       // Sanitize the AI response before saving
       ai_response = sanitizeOutput(ai_response);
 
-      console.log(`[Gemini API Success] Response received for user ${userId}, length: ${ai_response.length}`);
+      // console.log(`[Gemini API Success] Response received for user ${userId}, length: ${ai_response.length}`);
 
       // Save the sanitized message and response in the database
       const chat = await prisma.spiritGuideChat.create({
@@ -176,9 +176,9 @@ exports.sendMessage = async (req, res) => {
 
       res.status(201).json(chat);
     } catch (aiError) {
-      console.error("Detailed Gemini API Error for user", userId, ":", aiError);
-      console.error("Gemini API Error Code:", aiError.code);
-      console.error("Gemini API Error Message:", aiError.message);
+      // console.error("Detailed Gemini API Error for user", userId, ":", aiError);
+      // console.error("Gemini API Error Code:", aiError.code);
+      // console.error("Gemini API Error Message:", aiError.message);
 
       // Check for common errors
       if (aiError.message && aiError.message.includes("API key")) {

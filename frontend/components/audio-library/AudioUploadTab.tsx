@@ -190,7 +190,7 @@ export default function AudioUploadTab({ onUploadSuccess }: AudioUploadTabProps)
         )}
         
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Title *</Text>
+          <Text style={styles.label}>Title</Text>
           <TextInput
             style={styles.input}
             value={title}
@@ -236,7 +236,7 @@ export default function AudioUploadTab({ onUploadSuccess }: AudioUploadTabProps)
           </View>
         </View>
         
-        <View style={styles.inputGroup}>
+        {/* <View style={styles.inputGroup}>
           <Text style={styles.label}>Visibility</Text>
           <View style={styles.optionsContainer}>
             {visibilityOptions.map((vis) => (
@@ -259,7 +259,7 @@ export default function AudioUploadTab({ onUploadSuccess }: AudioUploadTabProps)
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </View> */}
         
         <TouchableOpacity
           style={[styles.uploadButton, uploading && styles.uploadButtonDisabled]}
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginTop: 10
   },
   label: {
     fontSize: 16,

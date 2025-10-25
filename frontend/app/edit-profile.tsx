@@ -8,14 +8,24 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
+import { getItem } from '@/utils/secureStorage';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function EditProfileScreen() {
   const { user, updateProfile } = useAuth();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     username: '',
     bio: '',
@@ -33,6 +43,71 @@ export default function EditProfileScreen() {
     }
   }, [user]);
 
+  const handlePickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+        // Auto-upload after selection
+        await uploadProfilePhoto(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+
+  const uploadProfilePhoto = async (imageUri?: string) => {
+    const uri = imageUri || selectedImage;
+    if (!uri) return;
+
+    setUploading(true);
+    try {
+      const token = await getItem('userToken');
+      if (!token) {
+        router.replace('/auth/login');
+        return;
+      }
+
+      // Create FormData for file upload
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', {
+        uri: uri,
+        type: 'image/jpeg',
+        name: `profile-${Date.now()}.jpg`,
+      } as any);
+
+      // Upload to Supabase bucket
+      const uploadResponse = await axios.post(
+        `${API_URL}/api/upload/profile-photo`,
+        formDataToSend,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      const photoUrl = uploadResponse.data.url;
+      setFormData((prev) => ({ ...prev, profile_picture_url: photoUrl }));
+      setSelectedImage(null);
+
+      Alert.alert('✓ Photo Saved', 'Your profile photo has been updated successfully');
+    } catch (error: any) {
+      console.error('Error uploading photo:', error);
+      Alert.alert('✗ Upload Failed', error.response?.data?.message || 'Failed to upload profile photo. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!formData.username.trim()) {
       Alert.alert('Error', 'Username is required');
@@ -47,12 +122,12 @@ export default function EditProfileScreen() {
         profile_picture_url: formData.profile_picture_url,
       });
 
-      Alert.alert('Success', 'Profile updated successfully', [
+      Alert.alert('✓ Profile Saved', 'Your profile has been updated successfully', [
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error: any) {
       Alert.alert(
-        'Error',
+        '✗ Save Failed',
         error.message || 'Failed to update profile. Please try again.'
       );
     } finally {
@@ -74,38 +149,62 @@ export default function EditProfileScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="chevron-back" size={24} color="#1F2937" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
         <TouchableOpacity
-          style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+          style={[styles.saveButton, (loading || uploading) && styles.saveButtonDisabled]}
           onPress={handleSave}
-          disabled={loading}
+          disabled={loading || uploading}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Text style={styles.saveButtonText}>
-            {loading ? 'Saving...' : 'Save'}
-          </Text>
+          {loading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Ionicons name="save-outline" size={20} color="white" />
+          )}
         </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
         <View style={styles.avatarSection}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {formData.username.charAt(0)?.toUpperCase() || 'U'}
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.avatarEditButton}>
-              <Ionicons name="camera" size={16} color="white" />
+            {selectedImage ? (
+              <Image source={{ uri: selectedImage }} style={styles.avatar} />
+            ) : formData.profile_picture_url ? (
+              <Image source={{ uri: formData.profile_picture_url }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {formData.username.charAt(0)?.toUpperCase() || 'U'}
+                </Text>
+              </View>
+            )}
+            <TouchableOpacity 
+              style={styles.avatarEditButton}
+              onPress={handlePickImage}
+              disabled={uploading}
+            >
+              {uploading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Ionicons name="camera" size={16} color="white" />
+              )}
             </TouchableOpacity>
           </View>
           <Text style={styles.avatarHint}>Tap to change photo</Text>
+          {uploading && (
+            <View style={styles.uploadingIndicator}>
+              <ActivityIndicator size="small" color="#7C3AED" />
+              <Text style={styles.uploadingText}>Uploading photo...</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.form}>
@@ -189,25 +288,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
-    paddingTop: 60,
-    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    height: 100,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: '#E5E5E5',
   },
   backButton: {
-    padding: 4,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: -8,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '500',
     color: '#1F2937',
+    flex: 1,
+    textAlign: 'center',
   },
   saveButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: -8,
     backgroundColor: '#7C3AED',
-    borderRadius: 8,
+    borderRadius: 40,
   },
   saveButtonDisabled: {
     opacity: 0.7,
@@ -248,7 +357,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#4B5563',
+    backgroundColor: '#7C3AED',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
@@ -257,6 +366,22 @@ const styles = StyleSheet.create({
   avatarHint: {
     fontSize: 12,
     color: '#6B7280',
+    marginBottom: 12,
+  },
+  uploadingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+    borderRadius: 8,
+    gap: 8,
+  },
+  uploadingText: {
+    color: '#7C3AED',
+    fontSize: 12,
+    fontWeight: '600',
   },
   form: {
     marginBottom: 40,

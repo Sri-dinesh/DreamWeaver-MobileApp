@@ -70,30 +70,30 @@ export default function ProfileScreen() {
       icon: 'person-outline',
       route: '/edit-profile',
     },
-    {
-      title: 'Export Journal',
-      subtitle: 'Download your dream data',
-      icon: 'download-outline',
-      route: '/export-journal',
-    },
-    {
-      title: 'Privacy & Security',
-      subtitle: 'Manage your privacy settings',
-      icon: 'shield-outline',
-      route: '/privacy-settings',
-    },
-    {
-      title: 'Notifications',
-      subtitle: 'Configure reminder settings',
-      icon: 'notifications-outline',
-      route: '/notification-settings',
-    },
-    {
-      title: 'Help & Support',
-      subtitle: 'Get help and contact support',
-      icon: 'help-circle-outline',
-      route: '/help-support',
-    },
+    // {
+    //   title: 'Export Journal',
+    //   subtitle: 'Download your dream data',
+    //   icon: 'download-outline',
+    //   route: '/export-journal',
+    // },
+    // {
+    //   title: 'Privacy & Security',
+    //   subtitle: 'Manage your privacy settings',
+    //   icon: 'shield-outline',
+    //   route: '/privacy-settings',
+    // },
+    // {
+    //   title: 'Notifications',
+    //   subtitle: 'Configure reminder settings',
+    //   icon: 'notifications-outline',
+    //   route: '/notification-settings',
+    // },
+    // {
+    //   title: 'Help & Support',
+    //   subtitle: 'Get help and contact support',
+    //   icon: 'help-circle-outline',
+    //   route: '/help-support',
+    // },
     {
       title: 'About',
       subtitle: 'App version and information',
@@ -229,6 +229,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface,
     borderBottomWidth: 1,
     borderBottomColor: palette.divider,
+    height: 100,
   },
   backButton: {
     padding: spacing.xs,

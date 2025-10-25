@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -16,39 +16,24 @@ export default function AboutScreen() {
   };
 
   const teamMembers = [
-    {
-      name: 'S Sridinesh',
-      role: 'Lead Developer',
-      image: 'AM'
-    },
-    {
-      name: 'M Charan Chandra',
-      role: 'Founder',
-      image: 'TK'
-    },
-    {
-      name: 'Jordan Smith',
-      role: 'Dream Researcher',
-      image: 'JS'
-    }
+    { name: 'M Charan Chandra', role: 'Founder', image: 'CC', linkedin: "https://www.linkedin.com/in/charan-chandra-mutakoduru-bb746038b" },
+    { name: 'S Sridinesh', role: 'Lead Developer', image: 'SD', linkedin: "https://www.linkedin.com/in/sridinesh07/" },
   ];
 
   const appFeatures = [
-    'Dream Journaling',
-    'Lucid Dream Training',
-    'Sleep Tracking',
-    'Community Sharing',
-    'AI Dream Analysis',
-    'Audio Recording'
+    'Secure Digital Journaling',
+    'AI-Powered Insights & Analysis',
+    'AI "Spirit Guide" Chatbot',
+    'AI Dream Art Generation',
+    'Sleep & Wellness Planner',
+    'Lucid Dream Trainer',
+    'Anonymous Supportive Community',
   ];
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>About</Text>
@@ -68,9 +53,10 @@ export default function AboutScreen() {
         <View style={styles.descriptionSection}>
           <Text style={styles.descriptionTitle}>About DreamWeaver</Text>
           <Text style={styles.descriptionText}>
-            DreamWeaver is a comprehensive dream journaling app designed to help you explore, understand, 
-            and enhance your dream experiences. Our mission is to unlock the mysteries of the subconscious 
-            mind through advanced tracking, analysis, and community sharing.
+            DreamWeaver is a comprehensive digital sanctuary for the proactive management of mental wellbeing. 
+            More than just an app, it's a private companion for self-discovery. Our mission is to destigmatize 
+            mental self-care, empowering you to understand your emotional patterns, improve sleep, and foster 
+            a healthier mind in a safe, calm, and modern environment.
           </Text>
         </View>
 
@@ -84,7 +70,7 @@ export default function AboutScreen() {
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Our Team</Text>
+        {/* <Text style={styles.sectionTitle}>Our Team</Text>
         <View style={styles.teamContainer}>
           {teamMembers.map((member, index) => (
             <View key={index} style={styles.teamMember}>
@@ -97,14 +83,35 @@ export default function AboutScreen() {
               </View>
             </View>
           ))}
-        </View>
+        </View> */}
+
+
+<Text style={styles.sectionTitle}>Our Team</Text>
+<View style={styles.teamContainer}>
+  {teamMembers.map((member, index) => (
+    <View key={index} style={styles.teamMember}>
+      <View style={styles.memberAvatar}>
+        <Text style={styles.memberInitials}>{member.image}</Text>
+      </View>
+      <View style={styles.memberInfo}>
+        <Text style={styles.memberName}>{member.name}</Text>
+        <Text style={styles.memberRole}>{member.role}</Text>
+
+        {/* LinkedIn Button */}
+        <Pressable
+          onPress={() => Linking.openURL(member.linkedin)}
+          style={styles.linkedinButton}
+        >
+          <Text style={styles.linkedinText}>View on LinkedIn</Text>
+        </Pressable>
+      </View>
+    </View>
+  ))}
+</View>
 
         <Text style={styles.sectionTitle}>Legal</Text>
         <View style={styles.optionsContainer}>
-          <TouchableOpacity 
-            style={[styles.optionRow, styles.lastOption]}
-            onPress={openPrivacyPolicy}
-          >
+          <TouchableOpacity style={[styles.optionRow, styles.lastOption]} onPress={openPrivacyPolicy}>
             <View style={styles.optionIconContainer}>
               <Ionicons name="shield-outline" size={20} color="#7C3AED" />
             </View>
@@ -117,10 +124,7 @@ export default function AboutScreen() {
         </View>
 
         <View style={styles.optionsContainer}>
-          <TouchableOpacity 
-            style={[styles.optionRow, styles.lastOption]}
-            onPress={openTermsOfService}
-          >
+          <TouchableOpacity style={[styles.optionRow, styles.lastOption]} onPress={openTermsOfService}>
             <View style={styles.optionIconContainer}>
               <Ionicons name="document-text-outline" size={20} color="#7C3AED" />
             </View>
@@ -132,7 +136,7 @@ export default function AboutScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.infoSection}>
+        {/* <View style={styles.infoSection}>
           <View style={styles.infoCard}>
             <Ionicons name="information-circle-outline" size={20} color="#3B82F6" />
             <View style={styles.infoContent}>
@@ -142,7 +146,7 @@ export default function AboutScreen() {
               </Text>
             </View>
           </View>
-        </View>
+        </View> */}
 
         <Text style={styles.copyrightText}>
           © 2025 DreamWeaver. All rights reserved.
@@ -153,10 +157,7 @@ export default function AboutScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -167,20 +168,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  placeholder: {
-    width: 32,
-  },
-  content: {
-    padding: 24,
-  },
+  backButton: { padding: 4 },
+  headerTitle: { fontSize: 18, fontWeight: '600', color: '#1F2937' },
+  placeholder: { width: 32 },
+  content: { padding: 24 },
+
   appInfoSection: {
     alignItems: 'center',
     backgroundColor: 'white',
@@ -202,22 +194,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  appName: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  appVersion: {
-    fontSize: 16,
-    color: '#7C3AED',
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  buildNumber: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
+  appName: { fontSize: 28, fontWeight: '800', color: '#1F2937', marginBottom: 8 },
+  appVersion: { fontSize: 16, color: '#7C3AED', fontWeight: '600', marginBottom: 4 },
+  buildNumber: { fontSize: 14, color: '#6B7280' },
+
   descriptionSection: {
     backgroundColor: 'white',
     borderRadius: 12,
@@ -229,23 +209,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  descriptionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 12,
-  },
-  descriptionText: {
-    fontSize: 15,
-    color: '#4B5563',
-    lineHeight: 22,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 16,
-  },
+  descriptionTitle: { fontSize: 18, fontWeight: '600', color: '#1F2937', marginBottom: 12 },
+  descriptionText: { fontSize: 15, color: '#4B5563', lineHeight: 22 },
+
+  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#1F2937', marginBottom: 16 },
+
   featuresContainer: {
     backgroundColor: 'white',
     borderRadius: 12,
@@ -257,16 +225,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  featureText: {
-    fontSize: 15,
-    color: '#4B5563',
-    marginLeft: 12,
-  },
+  featureItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  featureText: { fontSize: 15, color: '#4B5563', marginLeft: 12 },
+
   teamContainer: {
     backgroundColor: 'white',
     borderRadius: 12,
@@ -278,11 +239,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  teamMember: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
+  teamMember: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   memberAvatar: {
     width: 56,
     height: 56,
@@ -292,29 +249,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 16,
   },
-  memberInitials: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: 'white',
-  },
-  memberInfo: {
-    flex: 1,
-  },
-  memberName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  memberRole: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
+  memberInitials: { fontSize: 20, fontWeight: '600', color: 'white' },
+  memberInfo: { flex: 1 },
+  memberName: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 4 },
+  memberRole: { fontSize: 14, color: '#6B7280' },
+
   optionsContainer: {
     backgroundColor: 'white',
     borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: 24,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -328,9 +272,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
-  lastOption: {
-    borderBottomWidth: 0,
-  },
+  lastOption: { borderBottomWidth: 0 },
   optionIconContainer: {
     width: 36,
     height: 36,
@@ -340,22 +282,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  optionContent: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 2,
-  },
-  optionDescription: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  infoSection: {
-    marginBottom: 24,
-  },
+  optionContent: { flex: 1 },
+  optionTitle: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 2 },
+  optionDescription: { fontSize: 14, color: '#6B7280' },
+
+  infoSection: { marginBottom: 24 },
   infoCard: {
     flexDirection: 'row',
     backgroundColor: '#F0F9FF',
@@ -363,24 +294,21 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
-  infoContent: {
-    flex: 1,
-  },
-  infoTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  infoText: {
-    fontSize: 13,
-    color: '#4B5563',
-    lineHeight: 18,
-  },
+  infoContent: { flex: 1 },
+  infoTitle: { fontSize: 14, fontWeight: '600', color: '#1F2937', marginBottom: 4 },
+  infoText: { fontSize: 13, color: '#4B5563', lineHeight: 18 },
+
   copyrightText: {
     fontSize: 12,
     color: '#9CA3AF',
     textAlign: 'center',
     marginBottom: 24,
+  },
+   linkedinButton: {
+    marginTop: 6,
+  },
+  linkedinText: {
+    color: '#0A66C2',
+    fontWeight: '500',
   },
 });

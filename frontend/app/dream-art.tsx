@@ -60,14 +60,15 @@ export default function DreamArtScreen() {
   const [selectedImageTitle, setSelectedImageTitle] = useState<string>('');
 
   const styles_data = [
-    { id: 'dreamlike', name: '✨ Dreamlike' },
-    { id: 'surreal', name: '🌀 Surreal' },
-    { id: 'abstract', name: '🎨 Abstract' },
-    { id: 'ethereal', name: '👻 Ethereal' },
-    { id: 'psychedelic', name: '🌈 Psychedelic' },
-    { id: 'cosmic', name: '🌌 Cosmic' },
-    { id: 'mystical', name: '🔮 Mystical' },
-    { id: 'neon', name: '💫 Neon' },
+{ id: 'dreamlike', name: '✨ Dreamlike' }, 
+  { id: 'vivid', name: '👁️ Vivid' },       
+  { id: 'surreal', name: '🌀 Surreal' },   
+  { id: 'abstract', name: '🎨 Abstract' }, 
+  { id: 'ethereal', name: '☁️ Ethereal' },  
+  { id: 'mystical', name: '🔮 Mystical' },
+  { id: 'cosmic', name: '🌌 Cosmic' },    
+  { id: 'psychedelic', name: '🌈 Psychedelic' }, 
+  { id: 'realistic', name: '🖼️ Realistic'}
   ];
 
   useEffect(() => {
@@ -266,7 +267,7 @@ export default function DreamArtScreen() {
       console.log('Prompt:', aiPrompt);
       console.log('Style:', aiStyle);
 
-      setGenerationProgress('Sending request to Chutes.ai...');
+      setGenerationProgress('Sending request...');
 
       const response = await axios.post(
         `${API_URL}/api/dreamart/generate`,
@@ -453,8 +454,7 @@ export default function DreamArtScreen() {
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.sectionTitle}>Generate AI Dream Art</Text>
       <Text style={styles.sectionDescription}>
-        Let AI create surreal dream artwork from your imagination using
-        Chutes.ai
+        Let AI create surreal dream artwork from your imagination.
       </Text>
 
       <View style={styles.inputContainer}>
@@ -524,7 +524,7 @@ export default function DreamArtScreen() {
         <Ionicons name="information-circle" size={20} color="#3B82F6" />
         <Text style={styles.infoText}>
           ⏱️ Image generation typically takes 30-60 seconds. Stay on this screen
-          while generating. Powered by Chutes.ai Chrome model.
+          while generating. Powered by Chutes.ai Chroma model.
         </Text>
       </View>
 
@@ -539,87 +539,266 @@ export default function DreamArtScreen() {
     </ScrollView>
   );
 
-  const renderCollectionTab = () => (
-    <View style={styles.collectionContainer}>
-      <Text style={styles.sectionTitle}>Your Dream Art Collection</Text>
+//   const renderCollectionTab = () => (
+//     <View style={styles.collectionContainer}>
+//       <Text style={styles.sectionTitle}>Your Dream Art Collection</Text>
 
-      {loadingCollection ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#7C3AED" />
-          <Text style={styles.loadingText}>Loading your artworks...</Text>
-        </View>
-      ) : artCollection.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="image-outline" size={48} color="#D1D5DB" />
-          <Text style={styles.emptyTitle}>No Dream Art Yet</Text>
-          <Text style={styles.emptySubtitle}>
-            Upload or generate your first dream artwork
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={artCollection}
-          keyExtractor={(item) => item.id.toString()}
-          scrollEnabled={true}
-          numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
-          renderItem={({ item }) => (
-            <View style={styles.artCardWrapper}>
-              <LinearGradient
-                colors={['#FFFFFF', '#F8FAFC']}
-                style={styles.artCard}
-              >
-                <View style={styles.imageWrapper}>
-                  {/* ✅ FIXED: Added proper image styling */}
-                  <TouchableOpacity
-                    onPress={() => openImageViewer(item.imageUrl, item.title)}
-                    style={styles.imageTouchable}
-                  >
-                    <Image
-                      source={{ uri: item.imageUrl }}
-                      style={styles.artImage}
-                      onError={(e) => console.log('Image load error:', e)}
-                      resizeMode="cover"
-                    />
-                  </TouchableOpacity>
-                </View>
+//       {loadingCollection ? (
+//         <View style={styles.loadingContainer}>
+//           <ActivityIndicator size="large" color="#7C3AED" />
+//           <Text style={styles.loadingText}>Loading your artworks...</Text>
+//         </View>
+//       ) : artCollection.length === 0 ? (
+//         <View style={styles.emptyContainer}>
+//           <Ionicons name="image-outline" size={48} color="#D1D5DB" />
+//           <Text style={styles.emptyTitle}>No Dream Art Yet</Text>
+//           <Text style={styles.emptySubtitle}>
+//             Upload or generate your first dream artwork
+//           </Text>
+//         </View>
+//       ) : (
+//         <FlatList
+//           data={artCollection}
+//           keyExtractor={(item) => item.id.toString()}
+//           scrollEnabled={true}
+//           numColumns={2}
+//           columnWrapperStyle={styles.columnWrapper}
+//           renderItem={({ item }) => (
+//             <View style={styles.artCardWrapper}>
+//               <LinearGradient
+//                 colors={['#FFFFFF', '#F8FAFC']}
+//                 style={styles.artCard}
+//               >
+//                 <View style={styles.imageWrapper}>
+//                   {/* ✅ FIXED: Added proper image styling */}
+//                   <TouchableOpacity
+//                     onPress={() => openImageViewer(item.imageUrl, item.title)}
+//                     style={styles.imageTouchable}
+//                   >
+//                     <Image
+//                       source={{ uri: item.imageUrl }}
+//                       style={styles.artImage}
+//                       onError={(e) => console.log('Image load error:', e)}
+//                       resizeMode="cover"
+//                     />
+//                   </TouchableOpacity>
+//                 </View>
 
-                <View style={styles.artInfo}>
+//                 <View style={styles.artInfo}>
+//                   <Text style={styles.artTitle} numberOfLines={2}>
+//                     {item.title}
+//                   </Text>
+//                   {item.description && (
+//                     <Text style={styles.artDescription} numberOfLines={2}>
+//                       {item.description}
+//                     </Text>
+//                   )}
+
+//                   <View style={styles.artMeta}>
+//                     <View
+//                       style={[
+//                         styles.artType,
+//                         {
+//                           backgroundColor:
+//                             item.type === 'Generated'
+//                               ? 'rgba(124, 58, 237, 0.1)'
+//                               : 'rgba(34, 197, 94, 0.1)',
+//                         },
+//                       ]}
+//                     >
+//                       <Text
+//                         style={[
+//                           styles.artTypeText,
+//                           {
+//                             color:
+//                               item.type === 'Generated' ? '#7C3AED' : '#22C55E',
+//                           },
+//                         ]}
+//                       >
+//                         {item.type === 'Generated' ? '🤖 AI' : '📸 Upload'}
+//                       </Text>
+//                     </View>
+//                   </View>
+
+//                   <TouchableOpacity
+//                     style={styles.deleteArtButton}
+//                     onPress={() => handleDeleteArt(item.id)}
+//                     disabled={deleting === item.id}
+//                   >
+//                     {deleting === item.id ? (
+//                       <ActivityIndicator size="small" color="#EF4444" />
+//                     ) : (
+//                       <Ionicons
+//                         name="trash-outline"
+//                         size={16}
+//                         color="#EF4444"
+//                       />
+//                     )}
+//                   </TouchableOpacity>
+//                 </View>
+//               </LinearGradient>
+//             </View>
+//           )}
+//           contentContainerStyle={styles.collectionList}
+//         />
+//       )}
+
+//       {/* Image Viewer Modal */}
+//       <Modal
+//         visible={isImageViewerVisible}
+//         transparent={true}
+//         animationType="fade"
+//         onRequestClose={closeImageViewer}
+//       >
+//         <View style={styles.imageViewerOverlay}>
+//           <TouchableOpacity
+//             style={styles.closeButton}
+//             onPress={closeImageViewer}
+//           >
+//             <Ionicons name="close" size={32} color="white" />
+//           </TouchableOpacity>
+
+//           <View style={styles.imageViewerContainer}>
+//             <Image
+//               source={{ uri: selectedImageForView }}
+//               style={styles.fullScreenImage}
+//               resizeMode="contain"
+//             />
+//             <Text style={styles.imageTitle}>{selectedImageTitle}</Text>
+//           </View>
+//         </View>
+//       </Modal>
+//     </View>
+//   <FlatList
+//   data={artCollection}
+//   keyExtractor={(item) => item.id.toString()}
+//   scrollEnabled={true}
+//   numColumns={2}
+//   columnWrapperStyle={styles.columnWrapper}
+//   renderItem={({ item }) => (
+//     <View style={styles.artCardWrapper}>
+//       <LinearGradient
+//         colors={['#FFFFFF', '#F8FAFC']}
+//         style={styles.artCard}
+//       >
+//         <View style={styles.imageWrapper}>
+//           <TouchableOpacity
+//             onPress={() => openImageViewer(item.imageUrl, item.title)}
+//             style={styles.imageTouchable}
+//           >
+//             <Image
+//               source={{ uri: item.imageUrl }}
+//               style={styles.artImage}
+//               onError={(e) => console.log('Image load error:', e)}
+//               resizeMode="cover"
+//             />
+//           </TouchableOpacity>
+//         </View>
+
+//         <View style={styles.artInfo}>
+//           <View style={styles.artHeader}>
+//             <Text style={styles.artTitle} numberOfLines={2}>
+//               {item.title}
+//             </Text>
+//             <TouchableOpacity
+//               style={styles.deleteArtButton}
+//               onPress={() => handleDeleteArt(item.id)}
+//               disabled={deleting === item.id}
+//             >
+//               {deleting === item.id ? (
+//                 <ActivityIndicator size="small" color="#EF4444" />
+//               ) : (
+//                 <Ionicons name="trash-outline" size={16} color="#EF4444" />
+//               )}
+//             </TouchableOpacity>
+//           </View>
+
+//           {item.description && (
+//             <Text style={styles.artDescription} numberOfLines={2}>
+//               {item.description}
+//             </Text>
+//           )}
+
+//           <View style={styles.artMeta}>
+//             <View
+//               style={[
+//                 styles.artType,
+//                 {
+//                   backgroundColor:
+//                     item.type === 'Generated'
+//                       ? 'rgba(124, 58, 237, 0.1)'
+//                       : 'rgba(34, 197, 94, 0.1)',
+//                 },
+//               ]}
+//             >
+//               <Text
+//                 style={[
+//                   styles.artTypeText,
+//                   {
+//                     color:
+//                       item.type === 'Generated' ? '#7C3AED' : '#22C55E',
+//                   },
+//                 ]}
+//               >
+//                 {item.type === 'Generated' ? '🤖 AI' : '📸 Upload'}
+//               </Text>
+//             </View>
+//           </View>
+//         </View>
+//       </LinearGradient>
+//     </View>
+//   )}
+//   contentContainerStyle={[styles.collectionList, { paddingBottom: 60 }]}
+// />
+
+//   );
+const renderCollectionTab = () => (
+  <View style={{ flex: 1 }}>
+    {loadingCollection ? (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#7C3AED" />
+        <Text style={styles.loadingText}>Loading your artworks...</Text>
+      </View>
+    ) : artCollection.length === 0 ? (
+      <View style={styles.emptyContainer}>
+        <Ionicons name="image-outline" size={48} color="#D1D5DB" />
+        <Text style={styles.emptyTitle}>No Dream Art Yet</Text>
+        <Text style={styles.emptySubtitle}>
+          Upload or generate your first dream artwork
+        </Text>
+      </View>
+    ) : (
+      <FlatList
+        data={artCollection}
+        keyExtractor={(item) => item.id.toString()}
+        scrollEnabled={true}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
+        renderItem={({ item }) => (
+          <View style={styles.artCardWrapper}>
+            <LinearGradient
+              colors={['#FFFFFF', '#F8FAFC']}
+              style={styles.artCard}
+            >
+              <View style={styles.imageWrapper}>
+                <TouchableOpacity
+                  onPress={() => openImageViewer(item.imageUrl, item.title)}
+                  style={styles.imageTouchable}
+                >
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={styles.artImage}
+                    resizeMode="cover"
+                    onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.artInfo}>
+                <View style={styles.artHeader}>
                   <Text style={styles.artTitle} numberOfLines={2}>
                     {item.title}
                   </Text>
-                  {item.description && (
-                    <Text style={styles.artDescription} numberOfLines={2}>
-                      {item.description}
-                    </Text>
-                  )}
-
-                  <View style={styles.artMeta}>
-                    <View
-                      style={[
-                        styles.artType,
-                        {
-                          backgroundColor:
-                            item.type === 'Generated'
-                              ? 'rgba(124, 58, 237, 0.1)'
-                              : 'rgba(34, 197, 94, 0.1)',
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.artTypeText,
-                          {
-                            color:
-                              item.type === 'Generated' ? '#7C3AED' : '#22C55E',
-                          },
-                        ]}
-                      >
-                        {item.type === 'Generated' ? '🤖 AI' : '📸 Upload'}
-                      </Text>
-                    </View>
-                  </View>
-
                   <TouchableOpacity
                     style={styles.deleteArtButton}
                     onPress={() => handleDeleteArt(item.id)}
@@ -628,48 +807,78 @@ export default function DreamArtScreen() {
                     {deleting === item.id ? (
                       <ActivityIndicator size="small" color="#EF4444" />
                     ) : (
-                      <Ionicons
-                        name="trash-outline"
-                        size={16}
-                        color="#EF4444"
-                      />
+                      <Ionicons name="trash-outline" size={16} color="#EF4444" />
                     )}
                   </TouchableOpacity>
                 </View>
-              </LinearGradient>
-            </View>
-          )}
-          contentContainerStyle={styles.collectionList}
-        />
-      )}
 
-      {/* Image Viewer Modal */}
-      <Modal
-        visible={isImageViewerVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={closeImageViewer}
-      >
-        <View style={styles.imageViewerOverlay}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={closeImageViewer}
-          >
-            <Ionicons name="close" size={32} color="white" />
-          </TouchableOpacity>
+                {item.description && (
+                  <Text style={styles.artDescription} numberOfLines={2}>
+                    {item.description}
+                  </Text>
+                )}
 
-          <View style={styles.imageViewerContainer}>
-            <Image
-              source={{ uri: selectedImageForView }}
-              style={styles.fullScreenImage}
-              resizeMode="contain"
-            />
-            <Text style={styles.imageTitle}>{selectedImageTitle}</Text>
+                <View style={styles.artMeta}>
+                  <View
+                    style={[
+                      styles.artType,
+                      {
+                        backgroundColor:
+                          item.type === 'Generated'
+                            ? 'rgba(124, 58, 237, 0.1)'
+                            : 'rgba(34, 197, 94, 0.1)',
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.artTypeText,
+                        {
+                          color:
+                            item.type === 'Generated' ? '#7C3AED' : '#22C55E',
+                        },
+                      ]}
+                    >
+                      {item.type === 'Generated' ? '🤖 AI' : '📸 Upload'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </LinearGradient>
           </View>
+        )}
+        contentContainerStyle={[styles.collectionList, { paddingBottom: 60 }]}
+      />
+    )}
+
+    {/* ✅ Image Viewer Modal (add back here) */}
+    <Modal
+      visible={isImageViewerVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={closeImageViewer}
+    >
+      <View style={styles.imageViewerOverlay}>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={closeImageViewer}
+        >
+          <Ionicons name="close" size={32} color="white" />
+        </TouchableOpacity>
+
+        <View style={styles.imageViewerContainer}>
+          <Image
+            source={{ uri: selectedImageForView }}
+            style={styles.fullScreenImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.imageTitle}>{selectedImageTitle}</Text>
         </View>
-      </Modal>
-    </View>
-  );
+      </View>
+    </Modal>
+  </View>
+);
+
 
   const tabs = [
     { id: 'upload', name: 'Upload', icon: 'cloud-upload-outline' as const },
@@ -993,24 +1202,24 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
   },
-  collectionList: {
-    paddingBottom: 20,
-  },
+  // collectionList: {
+  //   paddingBottom: 20,
+  // },
   columnWrapper: {
     gap: 12,
   },
-  artCardWrapper: {
-    flex: 1,
-  },
-  artCard: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
+  // artCardWrapper: {
+  //   flex: 1,
+  // },
+  // artCard: {
+  //   borderRadius: 12,
+  //   overflow: 'hidden',
+  //   shadowColor: '#000',
+  //   shadowOffset: { width: 0, height: 2 },
+  //   shadowOpacity: 0.1,
+  //   shadowRadius: 8,
+  //   elevation: 3,
+  // },
   imageWrapper: {
     width: '100%',
     height: 150,
@@ -1025,37 +1234,37 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  artInfo: {
-    padding: 12,
-  },
-  artTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  artDescription: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 8,
-  },
-  artMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  artType: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  artTypeText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  deleteArtButton: {
-    padding: 6,
-  },
+  // artInfo: {
+  //   padding: 12,
+  // },
+  // artTitle: {
+  //   fontSize: 14,
+  //   fontWeight: '600',
+  //   color: '#1F2937',
+  //   marginBottom: 4,
+  // },
+  // artDescription: {
+  //   fontSize: 12,
+  //   color: '#6B7280',
+  //   marginBottom: 8,
+  // },
+  // artMeta: {
+  //   flexDirection: 'row',
+  //   justifyContent: 'space-between',
+  //   alignItems: 'center',
+  // },
+  // artType: {
+  //   paddingHorizontal: 8,
+  //   paddingVertical: 4,
+  //   borderRadius: 6,
+  // },
+  // artTypeText: {
+  //   fontSize: 11,
+  //   fontWeight: '600',
+  // },
+  // deleteArtButton: {
+  //   padding: 6,
+  // },
   // Image Viewer Styles
   imageViewerOverlay: {
     flex: 1,
@@ -1095,5 +1304,69 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     textAlign: 'center',
+  },
+  collectionList: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    // paddingBottom moved inline so you can adjust dynamically
+  },
+
+  artCardWrapper: {
+    flex: 1,
+    margin: 8,
+  },
+
+  artCard: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 3,
+  },
+
+  artInfo: {
+    padding: 10,
+  },
+
+  // ✅ Align title + delete icon horizontally
+  artHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+
+  artTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+    marginRight: 8,
+  },
+
+  deleteArtButton: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  artDescription: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 6,
+  },
+
+  artMeta: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+
+  artType: {
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+
+  artTypeText: {
+    fontSize: 10,
+    fontWeight: '500',
   },
 });

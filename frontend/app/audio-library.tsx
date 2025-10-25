@@ -6,20 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  Dimensions,
   RefreshControl,
+  SafeAreaView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { gradients, palette, radii, shadows, spacing, typography } from '@/theme';
+import { palette } from '@/theme';
 import { useAuth } from '@/context/AuthContext';
 import { audioLibraryService } from '@/services/audioLibraryService';
 import AudioUploadTab from '@/components/audio-library/AudioUploadTab';
 import AudioCollectionsTab from '@/components/audio-library/AudioCollectionsTab';
-
-const { width } = Dimensions.get('window');
 
 export default function AudioLibraryScreen() {
   const { user } = useAuth();
@@ -28,6 +25,7 @@ export default function AudioLibraryScreen() {
   const [publicAudioFiles, setPublicAudioFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (activeTab === 'collections') {
@@ -55,16 +53,8 @@ export default function AudioLibraryScreen() {
       setPublicAudioFiles(files);
     } catch (error) {
       console.error('Error fetching public audio files:', error);
-      // Don't show alert for public files as they're optional
     }
   };
-
-  useEffect(() => {
-    if (activeTab === 'collections') {
-      fetchAudioFiles();
-      fetchPublicAudioFiles();
-    }
-  }, [activeTab]);
 
   const handleRefresh = async () => {
     if (activeTab === 'collections') {
@@ -76,50 +66,66 @@ export default function AudioLibraryScreen() {
   };
 
   const handleUploadSuccess = () => {
-    // Switch to collections tab after successful upload
     setActiveTab('collections');
-    // Refresh the collections
     fetchAudioFiles();
     fetchPublicAudioFiles();
   };
 
-  const insets = useSafeAreaInsets();
-
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color="#1F2937" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Audio Library</Text>
         <View style={styles.rightAction} />
       </View>
 
-      {/* Tab Selector */}
+      {/* Tabs */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'upload' && styles.activeTab]}
           onPress={() => setActiveTab('upload')}
         >
-          <Text style={[styles.tabText, activeTab === 'upload' && styles.activeTabText]}>
+          <Ionicons
+            name="cloud-upload-outline"
+            size={18}
+            color={activeTab === 'upload' ? '#FFFFFF' : '#7C3AED'}
+            style={styles.tabIcon}
+          />
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'upload' && styles.activeTabText,
+            ]}
+          >
             Upload
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.tab, activeTab === 'collections' && styles.activeTab]}
           onPress={() => setActiveTab('collections')}
         >
-          <Text style={[styles.tabText, activeTab === 'collections' && styles.activeTabText]}>
+          <Ionicons
+            name="albums-outline"
+            size={18}
+            color={activeTab === 'collections' ? '#FFFFFF' : '#7C3AED'}
+            style={styles.tabIcon}
+          />
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'collections' && styles.activeTabText,
+            ]}
+          >
             Collections
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Tab Content */}
-      <ScrollView 
+      {/* <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -129,16 +135,38 @@ export default function AudioLibraryScreen() {
         {activeTab === 'upload' ? (
           <AudioUploadTab onUploadSuccess={handleUploadSuccess} />
         ) : (
-          <AudioCollectionsTab 
+          <AudioCollectionsTab
             audioFiles={audioFiles}
             publicAudioFiles={publicAudioFiles}
-            loading={loading} 
+            loading={loading}
             onRefresh={handleRefresh}
             onDeleteSuccess={fetchAudioFiles}
           />
         )}
-      </ScrollView>
-    </View>
+      </ScrollView> */}
+      {activeTab === 'upload' ? (
+        <ScrollView
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+        >
+          <AudioUploadTab onUploadSuccess={handleUploadSuccess} />
+        </ScrollView>
+      ) : (
+        <View style={styles.content}>
+          <AudioCollectionsTab
+            audioFiles={audioFiles}
+            publicAudioFiles={publicAudioFiles}
+            loading={loading}
+            onRefresh={handleRefresh}
+            onDeleteSuccess={fetchAudioFiles}
+          />
+        </View>
+      )}
+
+    </SafeAreaView>
   );
 }
 
@@ -151,46 +179,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.95)',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+    borderBottomColor: 'rgba(0,0,0,0.1)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   backButton: {
-    padding: 4,
+    padding: 6,
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     color: '#1F2937',
   },
   rightAction: {
-    padding: 4,
+    padding: 6,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#EDE9FE',
-    marginHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 16,
+    backgroundColor: '#F3F4F6',
+    marginHorizontal: 14,
+    borderRadius: 10,
+    marginBottom: 12,
+    marginTop: 10,
+    overflow: 'hidden',
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   activeTab: {
     backgroundColor: '#7C3AED',
   },
+  tabIcon: {
+    marginRight: 6,
+  },
   tabText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#7C3AED',
   },
@@ -199,6 +233,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
+    paddingBottom: 16,
   },
 });

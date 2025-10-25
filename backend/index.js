@@ -50,6 +50,7 @@ const sharedRoutes = require("./src/routes/shared.routes");
 const audioLibraryRoutes = require("./src/routes/audiolibrary.routes");
 const publicAudioRoutes = require("./src/routes/public-audio.routes");
 const audioGenerationRoutes = require("./src/routes/audioGeneration.routes");
+const uploadRoutes = require("./src/routes/upload.routes");
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Welcome to the DreamWeaver Backend API" });
@@ -73,6 +74,7 @@ app.use("/api/shared", sharedRoutes);
 app.use("/api/audio-library", audioLibraryRoutes);
 app.use("/api/public-audio", publicAudioRoutes);
 app.use("/api/ai", audioGenerationRoutes);
+app.use("/api/upload", uploadRoutes);
 
 app.use((req, res, next) => {
   res.status(404).json({
@@ -95,8 +97,8 @@ if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 8080;
   app.listen(PORT, () => {
     console.log(`\n✅ DreamWeaver Backend Server (Development)`);
-    console.log(`   Running on: http://localhost:${PORT}`);
-    console.log(`   Health Check: http://localhost:${PORT}/api/health\n`);
+    // console.log(`   Running on: http://localhost:${PORT}`);
+    // console.log(`   Health Check: http://localhost:${PORT}/api/health\n`);
   });
 }
 

@@ -413,7 +413,7 @@ export default function SpiritGuideScreen() {
             />
           </TouchableOpacity>
         </View>
-        <View style={styles.actionButtons}>
+        {/* <View style={styles.actionButtons}>
           <TouchableOpacity
             style={[
               styles.newChatButtonBottom,
@@ -436,7 +436,7 @@ export default function SpiritGuideScreen() {
               New Chat
             </Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
       </View>
     </KeyboardAvoidingView>
   );

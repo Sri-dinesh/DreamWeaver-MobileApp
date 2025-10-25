@@ -27,30 +27,17 @@ export default function RitualModal({
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (ritualModalVisible) {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [ritualModalVisible, fadeAnim]);
+    Animated.timing(fadeAnim, {
+      toValue: ritualModalVisible ? 1 : 0,
+      duration: ritualModalVisible ? 300 : 200,
+      useNativeDriver: true,
+    }).start();
+  }, [ritualModalVisible]);
 
   const formatRitualText = (text: string): string[] => {
     if (!text) return [];
-
     const paragraphs = text.split('\n').filter((para) => para.trim() !== '');
-
-    return paragraphs.map((para) => {
-      para = para.replace(/---/g, '');
-      return para.trim();
-    });
+    return paragraphs.map((para) => para.replace(/---/g, '').trim());
   };
 
   return (
@@ -62,60 +49,60 @@ export default function RitualModal({
     >
       <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
         <View style={styles.modalContainerCentered}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Sleep Ritual</Text>
-              <TouchableOpacity onPress={() => setRitualModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#6B7280" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-              style={styles.modalBody}
-              contentContainerStyle={styles.modalBodyContent}
+          {/* Modal Header */}
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Sleep Ritual</Text>
+            <TouchableOpacity
+              onPress={() => setRitualModalVisible(false)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <View style={styles.ritualContentContainer}>
-                <Text style={styles.ritualTitle}>
-                  Your Personalized Sleep Ritual
-                </Text>
-                <Text style={styles.ritualSubtitle}>
-                  For goal: {currentPlan?.goal}
-                </Text>
+              <Ionicons name="close" size={26} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
 
-                {currentRitual ? (
-                  <View style={styles.formattedRitualContent}>
-                    {formatRitualText(currentRitual).map((paragraph, index) => (
-                      <Text
-                        key={index}
-                        style={[
-                          styles.ritualParagraph,
-                          paragraph.startsWith('**Step') &&
-                            styles.ritualStepHeading,
-                          paragraph.startsWith('##') &&
-                            styles.ritualMainHeading,
-                          paragraph.startsWith('###') &&
-                            styles.ritualSubHeading,
-                          paragraph.startsWith('•') && styles.ritualListItem,
-                        ]}
-                      >
-                        {paragraph}
-                      </Text>
-                    ))}
-                  </View>
-                ) : (
-                  <Text style={styles.emptyText}>No ritual available.</Text>
-                )}
-              </View>
-            </ScrollView>
+          {/* Modal Body */}
+          <ScrollView
+            style={styles.modalBody}
+            contentContainerStyle={styles.modalBodyContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.ritualContentContainer}>
+              <Text style={styles.ritualTitle}>Your Personalized Sleep Ritual</Text>
+              <Text style={styles.ritualSubtitle}>
+                For goal: {currentPlan?.goal}
+              </Text>
 
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => setRitualModalVisible(false)}
-              >
-                <Text style={styles.modalButtonText}>Close</Text>
-              </TouchableOpacity>
+              {currentRitual ? (
+                <View style={styles.formattedRitualContent}>
+                  {formatRitualText(currentRitual).map((paragraph, index) => (
+                    <Text
+                      key={index}
+                      style={[
+                        styles.ritualParagraph,
+                        paragraph.startsWith('##') && styles.ritualMainHeading,
+                        paragraph.startsWith('###') && styles.ritualSubHeading,
+                        paragraph.startsWith('**Step') && styles.ritualStepHeading,
+                        paragraph.startsWith('•') && styles.ritualListItem,
+                      ]}
+                    >
+                      {paragraph}
+                    </Text>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.emptyText}>No ritual available.</Text>
+              )}
             </View>
+          </ScrollView>
+
+          {/* Footer */}
+          <View style={styles.modalFooter}>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setRitualModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Animated.View>
@@ -129,101 +116,96 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 16,
   },
   modalContainerCentered: {
-    width: '90%',
+    width: '100%',
     maxWidth: 700,
     maxHeight: '90%',
     backgroundColor: 'white',
-    borderRadius: 20,
+    borderRadius: 16,
     overflow: 'hidden',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
   },
-  modalContent: {
-    padding: 20,
-  },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 12,
+    paddingHorizontal: 4,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#1F2937',
   },
   modalBody: {
-    maxHeight: '90%',
-    paddingBottom: 20,
+    flexGrow: 1,
   },
   modalBodyContent: {
-    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   ritualContentContainer: {
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 16,
+    paddingVertical: 10,
   },
   ritualTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#7C3AED',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   ritualSubtitle: {
     fontSize: 14,
     color: '#6B7280',
-    marginBottom: 16,
+    marginBottom: 14,
     fontStyle: 'italic',
   },
   formattedRitualContent: {
     width: '100%',
-    backgroundColor: 'white',
+    backgroundColor: '#FAFAFA',
     borderRadius: 12,
-    padding: 20,
-    marginTop: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    padding: 16,
+    marginTop: 10,
   },
   ritualParagraph: {
     fontSize: 16,
     color: '#1F2937',
     lineHeight: 24,
-    marginBottom: 16,
+    marginBottom: 12,
     textAlign: 'left',
   },
   ritualMainHeading: {
     fontSize: 20,
     fontWeight: '700',
     color: '#4B5563',
-    marginBottom: 20,
+    marginBottom: 16,
     textAlign: 'center',
   },
   ritualSubHeading: {
     fontSize: 18,
     fontWeight: '600',
     color: '#4B5563',
-    marginBottom: 16,
+    marginBottom: 12,
     textAlign: 'center',
   },
   ritualStepHeading: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
     color: '#7C3AED',
     marginTop: 8,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   ritualListItem: {
     paddingLeft: 16,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   emptyText: {
     textAlign: 'center',
@@ -232,13 +214,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   modalFooter: {
-    marginTop: 20,
+    marginTop: 8,
     alignItems: 'center',
   },
   modalButton: {
     backgroundColor: '#7C3AED',
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 8,
   },
   modalButtonText: {
