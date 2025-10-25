@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Tabs, router, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
+import CustomTabBar from '@/components/CustomTabBar';
 
 export default function TabLayout() {
   const { isAuthenticated } = useAuth();
@@ -18,12 +19,9 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: '#7C3AED',
         tabBarInactiveTintColor: '#6B7280',
-        tabBarStyle: {
-          backgroundColor: 'white',
-          borderTopColor: '#E5E7EB',
-        },
         headerShown: false,
       }}
+      tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tabs.Screen
         name="index"

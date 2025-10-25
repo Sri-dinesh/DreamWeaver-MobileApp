@@ -1,4 +1,5 @@
 import { useAuth } from '@/context/AuthContext';
+import { gradients, palette, radii, shadows, spacing, typography } from '@/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -6,6 +7,9 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -75,123 +79,134 @@ export default function RegisterScreen() {
   };
 
   return (
-    <LinearGradient colors={['#4C1D95', '#7C3AED']} style={styles.container}>
-      <View style={styles.content}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+      <LinearGradient
+        colors={['#1e3a8a', '#3b82f6', '#60a5fa']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.container}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-
-        <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>
-            Join the dream exploration community
-          </Text>
-        </View>
-
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Ionicons
-              name="person-outline"
-              size={20}
-              color="#9CA3AF"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Username"
-              placeholderTextColor="#9CA3AF"
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize="none"
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons
-              name="mail-outline"
-              size={20}
-              color="#9CA3AF"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#9CA3AF"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-          {/* Updated Password Input Container */}
-          <View style={[styles.inputContainer, styles.passwordInputContainer]}>
-            <Ionicons
-              name="lock-closed-outline"
-              size={20}
-              color="#9CA3AF"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={[styles.input, styles.passwordInput]}
-              placeholder="Password"
-              placeholderTextColor="#9CA3AF"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-            />
+          <View style={styles.content}>
             <TouchableOpacity
-              style={styles.passwordVisibilityButton}
-              onPress={togglePasswordVisibility}
+              style={styles.backButton}
+              onPress={() => router.back()}
             >
-              <Ionicons
-                name={showPassword ? "eye-off" : "eye"} 
-                size={20}
-                color="#9CA3AF"
-              />
+              <Ionicons name="chevron-back" size={28} color="white" />
             </TouchableOpacity>
-          </View>
-          <Text style={styles.passwordHint}>
-            Password must contain at least 8 characters including uppercase,
-            lowercase, numbers, and special characters.
-          </Text>
-          <TouchableOpacity
-            style={[styles.registerButton, loading && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#4C1D95" size="small" />
-            ) : (
-              <Text style={styles.registerButtonText}>Create Account</Text>
-            )}
-          </TouchableOpacity>
-          <View style={styles.socialContainer}>
-            <Text style={styles.orText}>Or sign up with</Text>
-            <View style={styles.socialButtons}>
-              <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="logo-google" size={20} color="#4285F4" />
+
+            <View style={styles.header}>
+              <View style={styles.logoContainer}>
+                <Ionicons name="sparkles" size={48} color="white" />
+              </View>
+              <Text style={styles.title}>Create Your Account</Text>
+              <Text style={styles.subtitle}>Join the dream community</Text>
+            </View>
+
+            <View style={styles.formCard}>
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="person-outline"
+                  size={20}
+                  color="#7C3AED"
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Username"
+                  placeholderTextColor="#9CA3AF"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="mail-outline"
+                  size={20}
+                  color="#7C3AED"
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#9CA3AF"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color="#7C3AED"
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="#9CA3AF"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                  style={styles.passwordVisibilityButton}
+                  onPress={togglePasswordVisibility}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color="#7C3AED"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.passwordHint}>
+                Password must contain at least 8 characters including uppercase,
+                lowercase, numbers, and special characters.
+              </Text>
+
+              <TouchableOpacity
+                style={[styles.registerButton, loading && styles.buttonDisabled]}
+                onPress={handleRegister}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : (
+                  <LinearGradient
+                    colors={['#7C3AED', '#A855F7']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.registerButtonGradient}
+                  >
+                    <Text style={styles.registerButtonText}>Create Account</Text>
+                  </LinearGradient>
+                )}
               </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton}>
-                <Ionicons name="logo-apple" size={20} color="#000" />
+            </View>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.push('/auth/login')}>
+                <Text style={styles.footerLink}>Sign In</Text>
               </TouchableOpacity>
             </View>
           </View>
-          <TouchableOpacity onPress={() => router.push('/auth/login')}>
-            <Text style={styles.linkText}>
-              Already have an account?{' '}
-              <Text style={styles.linkTextBold}>Sign In</Text>
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.push('/auth/forgot-password')}
-          >
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </LinearGradient>
+        </ScrollView>
+      </LinearGradient>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -199,113 +214,163 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
   content: {
     flex: 1,
     padding: 24,
-    paddingTop: 60,
+    paddingTop: 40,
   },
   backButton: {
     marginBottom: 24,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
   },
   header: {
     marginBottom: 40,
+    alignItems: 'center',
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
     color: 'white',
     marginBottom: 8,
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
   },
-  form: {
-    flex: 1,
+  formCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backdropFilter: 'blur(10px)',
+    marginBottom: 24,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 12,
     marginBottom: 16,
     paddingHorizontal: 16,
-  },
-  passwordInputContainer: {
+    height: 52,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   inputIcon: {
     marginRight: 12,
   },
   input: {
     flex: 1,
-    height: 50,
     fontSize: 16,
     color: '#1F2937',
-  },
-  passwordInput: {
-    flex: 1,
+    fontWeight: '500',
   },
   passwordVisibilityButton: {
-    padding: 8, 
+    padding: 8,
     marginLeft: 8,
   },
   passwordHint: {
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 12,
-    marginBottom: 16,
+    marginBottom: 20,
     marginTop: -8,
     paddingHorizontal: 4,
+    lineHeight: 16,
   },
   registerButton: {
-    backgroundColor: 'white',
     borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 32,
+    overflow: 'hidden',
+    marginBottom: 20,
+    height: 52,
   },
   buttonDisabled: {
-    opacity: 0.7,
+    opacity: 0.6,
+  },
+  registerButtonGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
   },
   registerButtonText: {
-    color: '#4C1D95',
+    color: 'white',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
-  socialContainer: {
+  dividerContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 32,
+    marginVertical: 20,
   },
-  orText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 16,
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  dividerText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 13,
+    fontWeight: '500',
+    marginHorizontal: 12,
   },
   socialButtons: {
     flexDirection: 'row',
+    justifyContent: 'center',
     gap: 16,
   },
   socialButton: {
-    backgroundColor: 'white',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
   },
-  linkText: {
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  footerText: {
     color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
     fontSize: 14,
+    fontWeight: '500',
   },
-  linkTextBold: {
+  footerLink: {
     color: 'white',
-    fontWeight: '600',
-  },
-  forgotPasswordText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
     fontSize: 14,
-    marginTop: 12,
+    fontWeight: '700',
     textDecorationLine: 'underline',
   },
 });

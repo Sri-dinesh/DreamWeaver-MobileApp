@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -122,9 +123,6 @@ export default function DreamDetailScreen() {
     }
   };
 
-  const handleEdit = () => {
-    router.push('/dream-editor');
-  };
 
   const handleDelete = () => {
     Alert.alert(
@@ -135,12 +133,30 @@ export default function DreamDetailScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Dream Deleted',
-              'Your dream has been removed from your journal.',
-              [{ text: 'OK', onPress: () => router.back() }]
-            );
+          onPress: async () => {
+            try {
+              setLoading(true);
+              const token = await getToken();
+              if (!token) {
+                router.replace('/auth/login');
+                return;
+              }
+
+              await axios.delete(`${API_URL}/api/dreams/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+
+              // Clear dream state immediately
+              setDream(null);
+              
+              // Navigate back immediately without showing alert
+              router.back();
+            } catch (error) {
+              console.error('Error deleting dream:', error);
+              Alert.alert('Error', 'Failed to delete dream. Please try again.');
+            } finally {
+              setLoading(false);
+            }
           },
         },
       ]
@@ -173,6 +189,8 @@ export default function DreamDetailScreen() {
     });
   };
 
+  const insets = useSafeAreaInsets();
+
   const isShareable = (visibility: string) =>
     visibility === 'public' || visibility === 'friends';
 
@@ -186,8 +204,10 @@ export default function DreamDetailScreen() {
 
   if (!dream) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>Dream not found</Text>
+      <View style={styles.container}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+          <Text style={styles.errorText}>Dream not found</Text>
+        </View>
       </View>
     );
   }
@@ -258,23 +278,16 @@ export default function DreamDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['rgba(124, 58, 237, 0.1)', 'rgba(168, 85, 247, 0.05)']}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#4C1D95" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Dream Details</Text>
-          <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-            <Ionicons name="create-outline" size={24} color="#4C1D95" />
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="chevron-back" size={24} color="#1F2937" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Dream Details</Text>
+      </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.dreamCard}>
@@ -402,40 +415,30 @@ export default function DreamDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FAFBFC' },
-  headerGradient: { paddingTop: 50 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
-    paddingTop: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    height: 100,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginLeft: -8,
   },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#4C1D95' },
-  editButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1F2937',
+    flex: 1,
+    textAlign: 'center',
   },
   content: { flex: 1, padding: 24 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },

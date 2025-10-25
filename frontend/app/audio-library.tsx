@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { gradients, palette, radii, shadows, spacing, typography } from '@/theme';
 import { useAuth } from '@/context/AuthContext';
 import { audioLibraryService } from '@/services/audioLibraryService';
 import AudioUploadTab from '@/components/audio-library/AudioUploadTab';
@@ -81,27 +83,20 @@ export default function AudioLibraryScreen() {
     fetchPublicAudioFiles();
   };
 
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['rgba(124, 58, 237, 0.1)', 'rgba(168, 85, 247, 0.05)']}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#4C1D95" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Audio Library</Text>
-            <Text style={styles.headerSubtitle}>
-              Upload and manage your audio files
-            </Text>
-          </View>
-        </View>
-      </LinearGradient>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Audio Library</Text>
+        <View style={styles.rightAction} />
+      </View>
 
       {/* Tab Selector */}
       <View style={styles.tabContainer}>
@@ -150,45 +145,33 @@ export default function AudioLibraryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFBFC',
-  },
-  headerGradient: {
-    paddingTop: 50,
+    backgroundColor: palette.backgroundPrimary,
   },
   header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    paddingTop: 10,
-    gap: 12,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3,
   },
-  headerContent: {
-    flex: 1,
+  backButton: {
+    padding: 4,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#4C1D95',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
     fontSize: 16,
-    color: '#6B7280',
-    fontWeight: '500',
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  rightAction: {
+    padding: 4,
   },
   tabContainer: {
     flexDirection: 'row',

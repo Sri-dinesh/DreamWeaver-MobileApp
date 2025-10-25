@@ -1,11 +1,21 @@
 import { useAuth } from '@/context/AuthContext';
 import { fetchAllStats, Stats } from '@/services/statsService';
+import {
+  GradientStop,
+  gradients,
+  palette,
+  radii,
+  shadows,
+  spacing,
+  typography,
+} from '@/theme';
 import { getItem } from '@/utils/secureStorage';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   Dimensions,
   Image,
   ScrollView,
@@ -23,73 +33,57 @@ interface FeatureCard {
   icon: any;
   route: string;
   color: string;
-  gradient: string[];
+  gradient: GradientStop;
 }
 
 const features: FeatureCard[] = [
-  // {
-  //   title: 'Dream Journal',
-  //   description: 'Record and analyze your dreams',
-  //   icon: 'book',
-  //   route: '/journal',
-  //   color: '#7C3AED',
-  //   gradient: ['#7C3AED', '#A855F7'],
-  // },
   {
     title: 'Spirit Guide',
     description: 'Chat with your dream guide',
     icon: 'chatbubbles',
     route: '/spirit-guide',
-    color: '#7C3AED',
-    gradient: ['#7C3AED', '#A855F7'],
+    color: '#7457F8',
+    gradient: ['#8E7BFF', '#B48CFF'] as const,
   },
   {
     title: 'AI Tools',
     description: 'Generate prompts & imagery',
     icon: 'sparkles',
     route: '/prompt-builder',
-    color: '#EC4899',
-    gradient: ['#EC4899', '#F472B6'],
+    color: '#F072C5',
+    gradient: ['#F39CD6', '#FAD1EB'] as const,
   },
   {
     title: 'Dream Art',
     description: 'Create art from your dreams',
     icon: 'images',
     route: '/dream-art',
-    color: '#06B6D4',
-    gradient: ['#06B6D4', '#22D3EE'],
+    color: '#5AC4F3',
+    gradient: ['#5FD2F8', '#A1ECFF'] as const,
   },
   {
     title: 'Lucid Trainer',
-    description: 'Learn lucid dreaming techniques',
+    description: 'Lucid dreaming techniques',
     icon: 'flash',
     route: '/lucid-trainer',
-    color: '#F59E0B',
-    gradient: ['#F59E0B', '#FBBF24'],
+    color: '#F5B25A',
+    gradient: ['#F5C06D', '#FFE3A6'] as const,
   },
-  // {
-  //   title: 'Sleep Recorder',
-  //   description: 'Record your sleep patterns',
-  //   icon: 'radio',
-  //   route: '/sleep-recorder',
-  //   color: '#EF4444',
-  //   gradient: ['#EF4444', '#F87171'],
-  // },
   {
     title: 'Sleep Planner',
     description: 'Plan your sleep schedule',
     icon: 'moon',
     route: '/sleep-planner',
-    color: '#3B82F6',
-    gradient: ['#3B82F6', '#60A5FA'],
+    color: '#89ADF9',
+    gradient: ['#A1C3FF', '#D6E4FF'] as const,
   },
   {
     title: 'Audio Library',
     description: 'Upload & manage audio files',
     icon: 'library',
     route: '/audio-library',
-    color: '#10B981',
-    gradient: ['#10B981', '#34D399'],
+    color: '#6DD8B3',
+    gradient: ['#8FE8C9', '#C4F5E4'] as const,
   },
 ];
 
@@ -102,6 +96,7 @@ export default function HomeScreen() {
     avgSleep: '0h',
   });
   const [loading, setLoading] = useState(true);
+  const entranceAnim = useRef(new Animated.Value(0)).current;
 
   // Helper to get token
   // const getToken = async () => {
@@ -163,10 +158,20 @@ export default function HomeScreen() {
     loadStats();
   }, []);
 
+  useEffect(() => {
+    Animated.spring(entranceAnim, {
+      toValue: 1,
+      damping: 14,
+      mass: 0.9,
+      stiffness: 120,
+      useNativeDriver: true,
+    }).start();
+  }, [entranceAnim]);
+
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#6366F1', '#8B5CF6', '#D946EF']}
+        colors={gradients.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.header}
@@ -206,13 +211,30 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={styles.content}>
+        <Animated.View
+          style={[
+            styles.content,
+            {
+              opacity: entranceAnim,
+              transform: [
+                {
+                  translateY: entranceAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [28, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
           <View style={styles.statsContainer}>
             <LinearGradient
-              colors={['#F0F4FF', '#F8FAFF']}
+              colors={gradients.cardPrimary}
               style={styles.statCard}
             >
-              <Ionicons name="book-outline" size={22} color="#7C3AED" />
+              <View style={styles.statIconPill}>
+                <Ionicons name="book-outline" size={22} color={palette.primary} />
+              </View>
               <Text style={styles.statNumber}>
                 {loading ? '-' : stats.dreamCount}
               </Text>
@@ -220,10 +242,12 @@ export default function HomeScreen() {
             </LinearGradient>
 
             <LinearGradient
-              colors={['#F0FDF4', '#F8FAFF']}
+              colors={gradients.cardSecondary}
               style={styles.statCard}
             >
-              <Ionicons name="flash-outline" size={22} color="#10B981" />
+              <View style={styles.statIconPill}>
+                <Ionicons name="flash-outline" size={22} color={palette.success} />
+              </View>
               <Text style={styles.statNumber}>
                 {loading ? '-' : stats.lucidDreamCount}
               </Text>
@@ -231,10 +255,12 @@ export default function HomeScreen() {
             </LinearGradient>
 
             <LinearGradient
-              colors={['#F0F9FF', '#F8FAFF']}
+              colors={gradients.cardAccent}
               style={styles.statCard}
             >
-              <Ionicons name="moon-outline" size={22} color="#3B82F6" />
+              <View style={styles.statIconPill}>
+                <Ionicons name="moon-outline" size={22} color={palette.info} />
+              </View>
               <Text style={styles.statNumber}>
                 {loading ? '-' : stats.avgSleep}
               </Text>
@@ -254,7 +280,7 @@ export default function HomeScreen() {
                   onPress={() => router.push(feature.route as any)}
                 >
                   <LinearGradient
-                    colors={[feature.gradient[0], feature.gradient[1]]}
+                    colors={feature.gradient}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.featureCardGradient}
@@ -275,7 +301,7 @@ export default function HomeScreen() {
               ))}
             </View>
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
     </View>
   );
@@ -284,12 +310,12 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F6FF',
+    backgroundColor: palette.backgroundPrimary,
   },
   header: {
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 32,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxxl + 12,
+    paddingBottom: spacing.xxl,
   },
   headerContent: {
     flexDirection: 'row',
@@ -300,30 +326,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.95)',
-    fontWeight: '400',
-    marginBottom: 6,
+    ...typography.body,
+    color: 'rgba(255, 255, 255, 0.92)',
+    marginBottom: spacing.xs,
   },
   userName: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: 'white',
+    ...typography.heading,
+    fontSize: 30,
+    color: '#FFFFFF',
   },
   profileButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     overflow: 'hidden',
   },
   profileButtonContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     borderWidth: 3,
-    borderColor: 'rgb(255, 255, 255)',
+    borderColor: 'rgba(255, 255, 255, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
   },
   profileImage: {
     width: 46,
@@ -334,97 +360,93 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: spacing.xxxl,
   },
   content: {
-    paddingHorizontal: 20,
-    paddingVertical: 24,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
   },
   statsContainer: {
     flexDirection: 'row',
-    marginBottom: 36,
-    gap: 12,
+    marginBottom: spacing.xxl,
+    gap: spacing.md,
   },
   statCard: {
     flex: 1,
-    borderRadius: 16,
-    paddingVertical: 18,
-    paddingHorizontal: 12,
+    borderRadius: radii.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
     alignItems: 'center',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 3,
+    gap: spacing.sm,
+    ...shadows.soft,
+  },
+  statIconPill: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   statNumber: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#1F2937',
-    marginTop: 10,
-    marginBottom: 6,
+    fontSize: 28,
+    fontWeight: '700',
+    color: palette.textPrimary,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#64748B',
+    ...typography.caption,
+    color: palette.textSecondary,
     textAlign: 'center',
-    fontWeight: '600',
   },
   featuresSection: {
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#1F2937',
+    ...typography.heading,
+    color: palette.textPrimary,
   },
   featuresGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 14,
+    gap: spacing.md,
   },
   featureCard: {
-    width: (width - 54) / 2,
-    borderRadius: 20,
+    width: (width - spacing.lg * 2 - spacing.md) / 2,
+    borderRadius: radii.lg,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
+    ...shadows.medium,
   },
   featureCardGradient: {
-    padding: 20,
-    minHeight: 160,
+    padding: spacing.lg,
+    minHeight: 164,
     justifyContent: 'space-between',
+    borderRadius: radii.lg,
   },
   featureCardContent: {
     flex: 1,
   },
   featureIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    width: 46,
+    height: 46,
+    borderRadius: radii.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   featureTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: 'white',
-    marginBottom: 4,
+    ...typography.subheading,
+    color: '#FFFFFF',
+    marginBottom: spacing.xs,
   },
   featureDescription: {
-    fontSize: 13,
+    ...typography.bodySecondary,
     color: 'rgba(255, 255, 255, 0.85)',
-    fontWeight: '400',
   },
 });

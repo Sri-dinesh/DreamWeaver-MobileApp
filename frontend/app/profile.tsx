@@ -1,5 +1,6 @@
 import { useAuth } from '@/context/AuthContext';
 import { fetchAllStats, Stats } from '@/services/statsService';
+import { gradients, palette, radii, shadows, spacing, typography } from '@/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -128,14 +129,14 @@ export default function ProfileScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color={palette.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
         <TouchableOpacity
           style={styles.editButton}
           onPress={() => router.push('/edit-profile')}
         >
-          <Ionicons name="create-outline" size={20} color="#7C3AED" />
+          <Ionicons name="create-outline" size={20} color={palette.primary} />
         </TouchableOpacity>
       </View>
 
@@ -172,7 +173,7 @@ export default function ProfileScreen() {
 
           <View style={styles.statsContainer}>
             {loading ? (
-              <ActivityIndicator size="small" color="#7C3AED" />
+              <ActivityIndicator size="small" color={palette.primary} />
             ) : (
               profileStats.map((stat, index) => (
                 <View key={index} style={styles.statItem}>
@@ -192,13 +193,13 @@ export default function ProfileScreen() {
               onPress={() => router.push(item.route as any)}
             >
               <View style={styles.menuIcon}>
-                <Ionicons name={item.icon as any} size={20} color="#7C3AED" />
+                <Ionicons name={item.icon as any} size={20} color={palette.primary} />
               </View>
               <View style={styles.menuContent}>
                 <Text style={styles.menuTitle}>{item.title}</Text>
                 <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+              <Ionicons name="chevron-forward" size={20} color={palette.textSecondary} />
             </TouchableOpacity>
           ))}
         </View>
@@ -217,60 +218,56 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: palette.backgroundPrimary,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
-    paddingTop: 60,
-    backgroundColor: 'white',
+    padding: spacing.xl,
+    paddingTop: spacing.xxxl,
+    backgroundColor: palette.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: palette.divider,
   },
   backButton: {
-    padding: 4,
+    padding: spacing.xs,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
+    ...typography.subheading,
+    color: palette.textPrimary,
   },
   editButton: {
-    padding: 4,
+    padding: spacing.xs,
   },
   content: {
-    padding: 24,
+    padding: spacing.xl,
   },
   profileSection: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 24,
+    backgroundColor: palette.surface,
+    borderRadius: radii.lg,
+    padding: spacing.xl,
     alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: spacing.xl,
+    ...shadows.soft,
   },
   avatarContainer: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#7C3AED',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: palette.primary,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    ...shadows.medium,
   },
   avatarImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
   avatarText: {
     fontSize: 32,
@@ -278,21 +275,20 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   userName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 4,
+    ...typography.heading,
+    color: palette.textPrimary,
+    marginBottom: spacing.xs,
   },
   userEmail: {
-    fontSize: 16,
-    color: '#6B7280',
-    marginBottom: 8,
+    ...typography.body,
+    color: palette.textSecondary,
+    marginBottom: spacing.xs,
   },
   userBio: {
-    fontSize: 14,
-    color: '#4B5563',
+    ...typography.bodySecondary,
+    color: palette.textSecondary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -303,82 +299,76 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#7C3AED',
-    marginBottom: 4,
+    ...typography.heading,
+    color: palette.primary,
+    marginBottom: spacing.xs,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#6B7280',
+    ...typography.caption,
+    color: palette.textSecondary,
     textAlign: 'center',
   },
   menuSection: {
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: palette.surface,
+    borderRadius: radii.lg,
     overflow: 'hidden',
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: spacing.xl,
+    ...shadows.soft,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: palette.divider,
   },
   menuIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+    width: 44,
+    height: 44,
+    borderRadius: radii.lg,
+    backgroundColor: `${palette.primary}15`,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: spacing.md,
   },
   menuContent: {
     flex: 1,
   },
   menuTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 2,
+    ...typography.body,
+    color: palette.textPrimary,
+    marginBottom: spacing.xxs,
   },
   menuSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
+    ...typography.bodySecondary,
+    color: palette.textSecondary,
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: palette.surface,
+    borderRadius: radii.lg,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.xl,
     borderWidth: 1,
     borderColor: '#FEE2E2',
-    gap: 8,
+    gap: spacing.xs,
+    ...shadows.subtle,
   },
   logoutButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.body,
     color: '#EF4444',
   },
   versionText: {
-    fontSize: 12,
-    color: '#9CA3AF',
+    ...typography.caption,
+    color: palette.textMuted,
     textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: palette.backgroundPrimary,
   },
 });

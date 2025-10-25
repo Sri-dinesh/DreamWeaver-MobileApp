@@ -13,6 +13,8 @@ import {
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { gradients, palette, radii, shadows, spacing, typography } from '@/theme';
 import { SharedDream, User } from '@/types';
 import axios from 'axios';
 import { getItem } from '@/utils/secureStorage';
@@ -480,38 +482,25 @@ export default function CommunityScreen() {
     </ScrollView>
   );
 
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['rgba(124, 58, 237, 0.1)', 'rgba(168, 85, 247, 0.05)']}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Community</Text>
-            <Text style={styles.headerSubtitle}>
-              Connect with fellow dreamers
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.profileButton}
-            onPress={() => router.push('/profile')}
-          >
-            <Ionicons name="person-circle-outline" size={28} color="#7C3AED" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.friendRequestsButton}
-            onPress={() => router.push('/friend-requests')}
-          >
-            <Ionicons name="chatbubbles-outline" size={24} color="#7C3AED" />
-            {receivedRequests.length > 0 && (
-              <View style={styles.notificationBadge}>
-                <Text style={styles.badgeCount}>{receivedRequests.length}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={styles.backButton} />
+        <Text style={styles.headerTitle}>Community</Text>
+        <TouchableOpacity
+          style={styles.rightAction}
+          onPress={() => router.push('/friend-requests')}
+        >
+          <Ionicons name="chatbubbles-outline" size={20} color="#7C3AED" />
+          {receivedRequests.length > 0 && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.badgeCount}>{receivedRequests.length}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.tabsContainer}>
         {tabs.map((tab) => (
@@ -545,67 +534,49 @@ export default function CommunityScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFBFC',
-  },
-  headerGradient: {
-    paddingTop: 50,
+    backgroundColor: palette.backgroundPrimary,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    paddingTop: 10,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  headerContent: {
-    flex: 1,
+  backButton: {
+    width: 44,
+    height: 44,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#4C1D95',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
+    ...typography.body,
     fontSize: 16,
-    color: '#6B7280',
     fontWeight: '500',
+    color: palette.textPrimary,
+    flex: 1,
+    textAlign: 'center',
   },
-  profileButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  friendRequestsButton: {
+  rightAction: {
     position: 'relative',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginRight: -spacing.xs,
   },
   notificationBadge: {
     position: 'absolute',
     right: -4,
     top: -4,
     backgroundColor: '#EF4444',
-    borderRadius: 10,
+    borderRadius: radii.pill,
     minWidth: 20,
     height: 20,
     justifyContent: 'center',
@@ -613,127 +584,111 @@ const styles = StyleSheet.create({
   },
   badgeCount: {
     color: 'white',
-    fontSize: 12,
+    ...typography.caption,
     fontWeight: '700',
   },
   tabsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#FAFBFC',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    backgroundColor: palette.backgroundPrimary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
   },
   tab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    backgroundColor: 'white',
-    marginHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    gap: 6,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.md,
+    backgroundColor: palette.surface,
+    marginHorizontal: spacing.xs,
+    ...shadows.subtle,
+    gap: spacing.xs,
   },
   activeTab: {
-    backgroundColor: '#7C3AED',
-    shadowColor: '#7C3AED',
+    backgroundColor: palette.primary,
+    shadowColor: palette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 12,
+    shadowRadius: spacing.lg,
     elevation: 6,
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6B7280',
+    ...typography.bodySecondary,
+    color: palette.textSecondary,
   },
   activeTabText: {
     color: 'white',
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xl,
   },
   loadingContainer: {
-    paddingVertical: 40,
+    paddingVertical: spacing.xxxl,
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
+    marginTop: spacing.md,
+    ...typography.bodySecondary,
+    color: palette.textSecondary,
   },
   emptyContainer: {
-    padding: 40,
+    padding: spacing.xxxl,
     justifyContent: 'center',
     alignItems: 'center',
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#4B5563',
-    marginTop: 16,
-    marginBottom: 8,
+    ...typography.subheading,
+    color: palette.textSecondary,
+    marginTop: spacing.lg,
+    marginBottom: spacing.xs,
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
+    ...typography.bodySecondary,
+    color: palette.textSecondary,
     textAlign: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 6,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    backgroundColor: palette.surface,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.lg,
+    ...shadows.soft,
   },
   searchIcon: {
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   searchInput: {
     flex: 1,
-    height: 50,
-    fontSize: 16,
-    color: '#1F2937',
+    height: 52,
+    ...typography.body,
+    color: palette.textPrimary,
   },
   dreamsCountText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginBottom: 16,
+    ...typography.caption,
+    color: palette.textSecondary,
+    marginBottom: spacing.lg,
   },
   dreamCard: {
-    marginBottom: 16,
-    borderRadius: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
+    marginBottom: spacing.lg,
+    borderRadius: radii.lg,
+    ...shadows.soft,
   },
   dreamCardGradient: {
-    borderRadius: 6,
-    padding: 24,
+    borderRadius: radii.lg,
+    padding: spacing.xl,
   },
   dreamHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   authorInfo: {
     flex: 1,
@@ -741,17 +696,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#7C3AED',
+    width: 44,
+    height: 44,
+    borderRadius: radii.pill,
+    backgroundColor: palette.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.md,
     flexShrink: 0,
   },
   avatarText: {
-    fontSize: 18,
+    ...typography.body,
     fontWeight: '600',
     color: 'white',
   },
@@ -761,82 +716,76 @@ const styles = StyleSheet.create({
   authorNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
   authorName: {
-    fontSize: 14,
+    ...typography.body,
     fontWeight: '700',
-    color: '#1F2937',
+    color: palette.textPrimary,
   },
   friendsOnlyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#7C3AED',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 3,
-    gap: 3,
+    backgroundColor: palette.primary,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    borderRadius: radii.xs,
+    gap: spacing.xxs,
   },
   friendsOnlyText: {
-    fontSize: 10,
+    ...typography.caption,
     fontWeight: '600',
     color: 'white',
   },
   dreamTime: {
-    fontSize: 12,
-    color: '#6B7280',
+    ...typography.caption,
+    color: palette.textSecondary,
   },
   menuButton: {
-    padding: 4,
+    padding: spacing.xs,
   },
   dreamTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 12,
-    lineHeight: 24,
+    ...typography.subheading,
+    color: palette.textPrimary,
+    marginBottom: spacing.md,
+    lineHeight: 26,
   },
   dreamContent: {
-    fontSize: 16,
-    color: '#374151',
+    ...typography.body,
+    color: palette.textSecondary,
     lineHeight: 24,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   dreamActions: {
     flexDirection: 'row',
-    gap: 24,
+    gap: spacing.xl,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
   },
   actionText: {
-    fontSize: 15,
+    ...typography.body,
     fontWeight: '600',
-    color: '#6B7280',
+    color: palette.textSecondary,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 20,
+    ...typography.heading,
+    color: palette.textPrimary,
+    marginBottom: spacing.lg,
   },
   friendCard: {
-    marginBottom: 12,
-    borderRadius: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
+    marginBottom: spacing.md,
+    borderRadius: radii.lg,
+    ...shadows.soft,
   },
   friendCardGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 6,
-    padding: 20,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
     justifyContent: 'space-between',
   },
   userInfoContainer: {
@@ -846,92 +795,89 @@ const styles = StyleSheet.create({
   },
   friendInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.md,
   },
   friendName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 4,
+    ...typography.subheading,
+    color: palette.textPrimary,
+    marginBottom: spacing.xs,
   },
   friendStatus: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6B7280',
+    ...typography.bodySecondary,
+    color: palette.textSecondary,
   },
   messageButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.md,
+    backgroundColor: `${palette.primary}15`,
     justifyContent: 'center',
   },
   buttonLabel: {
-    fontSize: 12,
+    ...typography.caption,
     fontWeight: '600',
   },
   lucidBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#10B981',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 4,
+    backgroundColor: palette.success,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    borderRadius: radii.xs,
     alignSelf: 'flex-start',
-    marginBottom: 12,
-    gap: 4,
+    marginBottom: spacing.md,
+    gap: spacing.xxs,
   },
   lucidBadgeText: {
     color: 'white',
-    fontSize: 12,
+    ...typography.caption,
     fontWeight: '600',
   },
   tagsList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
+    gap: spacing.xs,
+    marginBottom: spacing.lg,
   },
   tag: {
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 4,
+    backgroundColor: palette.backgroundSecondary,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    borderRadius: radii.xs,
   },
   tagText: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
+    ...typography.caption,
+    color: palette.textSecondary,
   },
   errorContainer: {
-    padding: 40,
+    padding: spacing.xxxl,
     justifyContent: 'center',
     alignItems: 'center',
   },
   errorTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#4B5563',
-    marginTop: 16,
-    marginBottom: 8,
+    ...typography.subheading,
+    color: palette.textSecondary,
+    marginTop: spacing.lg,
+    marginBottom: spacing.xs,
   },
   errorMessage: {
-    fontSize: 14,
-    color: '#6B7280',
+    ...typography.bodySecondary,
+    color: palette.textSecondary,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   retryButton: {
-    backgroundColor: '#7C3AED',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 6,
+    backgroundColor: palette.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.md,
+    ...shadows.soft,
   },
   retryButtonText: {
+    ...typography.body,
     color: 'white',
-    fontWeight: '600',
   },
 });

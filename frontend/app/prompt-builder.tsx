@@ -15,6 +15,7 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import { getItem } from '@/utils/secureStorage';
@@ -872,26 +873,21 @@ export default function PromptBuilderScreen() {
     { id: 'history', name: 'History', icon: 'time-outline' as const },
   ];
 
+  const insets = useSafeAreaInsets();
+
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['rgba(124, 58, 237, 0.1)', 'rgba(168, 85, 247, 0.05)']}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Prompt Builder</Text>
-            <Text style={styles.headerSubtitle}>AI-Powered Dream Tools</Text>
-          </View>
-          <View style={styles.placeholder} />
-        </View>
-      </LinearGradient>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="chevron-back" size={24} color="#1F2937" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Prompt Builder</Text>
+        <View style={styles.rightAction} />
+      </View>
 
       <View style={styles.tabsContainer}>
         {tabs.map((tab) => (
@@ -935,35 +931,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FAFBFC',
   },
-  headerGradient: {
-    paddingTop: 10,
-  },
   header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    height: 100,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
   },
   backButton: {
-    padding: 8,
-  },
-  headerContent: {
-    flex: 1,
-    marginLeft: 12,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: -8,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#4C1D95',
-    marginBottom: 2,
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    color: '#6B7280',
+    fontSize: 16,
     fontWeight: '500',
+    color: '#1F2937',
+    flex: 1,
+    textAlign: 'center',
   },
-  placeholder: {
-    width: 40,
+  rightAction: {
+    width: 44,
+    height: 44,
   },
   tabsContainer: {
     flexDirection: 'row',

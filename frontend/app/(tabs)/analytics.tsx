@@ -12,6 +12,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { gradients, palette, radii, shadows, spacing, typography } from '@/theme';
 import { analyticsService } from '@/services/analyticsService';
 
 const { width } = Dimensions.get('window');
@@ -433,27 +435,22 @@ export default function AnalyticsScreen() {
     return colors[emotion.toLowerCase()] || colors.default;
   };
 
+  const insets = useSafeAreaInsets();
+
   if (loading) {
     return (
       <View style={styles.container}>
-        <LinearGradient
-          colors={['rgba(124, 58, 237, 0.1)', 'rgba(168, 85, 247, 0.05)']}
-          style={styles.headerGradient}
-        >
-          <View style={styles.header}>
-            <View style={styles.headerContent}>
-              <Text style={styles.headerTitle}>Analytics</Text>
-              <Text style={styles.headerSubtitle}>
-                Insights into your dream patterns
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.shareButton}>
-              <Ionicons name="share-outline" size={20} color="#7C3AED" />
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+          <View style={styles.backButton} />
+          <Text style={styles.headerTitle}>Analytics</Text>
+          <TouchableOpacity
+            style={styles.rightAction}
+          >
+            <Ionicons name="share-outline" size={20} color="#7C3AED" />
+          </TouchableOpacity>
+        </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#7C3AED" />
+          <ActivityIndicator size="large" color={palette.primary} />
           <Text style={styles.loadingText}>Loading analytics data...</Text>
         </View>
       </View>
@@ -462,22 +459,15 @@ export default function AnalyticsScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['rgba(124, 58, 237, 0.1)', 'rgba(168, 85, 247, 0.05)']}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Analytics</Text>
-            <Text style={styles.headerSubtitle}>
-              Insights into your dream patterns
-            </Text>
-          </View>
-          <TouchableOpacity style={styles.shareButton}>
-            <Ionicons name="share-outline" size={20} color="#7C3AED" />
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={styles.backButton} />
+        <Text style={styles.headerTitle}>Analytics</Text>
+        <TouchableOpacity
+          style={styles.rightAction}
+        >
+          <Ionicons name="share-outline" size={20} color="#7C3AED" />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView
         style={styles.scrollView}
@@ -521,153 +511,135 @@ export default function AnalyticsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFBFC',
-  },
-  headerGradient: {
-    paddingTop: 50,
+    backgroundColor: palette.backgroundPrimary,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    paddingTop: 10,
-  },
-  headerContent: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#4C1D95',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  shareButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+  },
+  headerTitle: {
+    ...typography.body,
+    fontSize: 16,
+    fontWeight: '500',
+    color: palette.textPrimary,
+    flex: 1,
+    textAlign: 'center',
+  },
+  rightAction: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: -spacing.xs,
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    paddingBottom: 100,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xl,
+    paddingBottom: spacing.xxxl + 40,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: spacing.xxl,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 20,
+    ...typography.heading,
+    color: palette.textPrimary,
+    marginBottom: spacing.lg,
   },
   placeholderCard: {
-    padding: 40,
-    borderRadius: 6,
+    padding: spacing.xxxl,
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
-    backgroundColor: '#FFFFFF',
+    ...shadows.soft,
+    backgroundColor: palette.surface,
   },
   placeholderIcon: {
     width: 64,
     height: 64,
-    borderRadius: 6,
-    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+    borderRadius: radii.md,
+    backgroundColor: `${palette.primary}15`,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   placeholderTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
+    ...typography.subheading,
+    color: palette.textPrimary,
     textAlign: 'center',
-    marginBottom: 8,
-    lineHeight: 24,
+    marginBottom: spacing.xs,
+    lineHeight: 28,
   },
   placeholderText: {
-    fontSize: 16,
-    color: '#6B7280',
+    ...typography.body,
+    color: palette.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
-    fontWeight: '500',
+    lineHeight: 24,
   },
   // New styles for data cards
   dataCard: {
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
+    padding: spacing.lg,
+    borderRadius: radii.lg,
+    backgroundColor: palette.surface,
+    ...shadows.soft,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 16,
+    ...typography.subheading,
+    color: palette.textPrimary,
+    marginBottom: spacing.lg,
   },
   // Dream consistency styles
   consistencyHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   consistencyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6B7280',
+    ...typography.body,
+    color: palette.textSecondary,
   },
   consistencyValue: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#7C3AED',
+    ...typography.heading,
+    color: palette.primary,
   },
   progressBarContainer: {
     height: 10,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 5,
-    marginBottom: 12,
+    backgroundColor: palette.divider,
+    borderRadius: radii.xs,
+    marginBottom: spacing.md,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    borderRadius: 5,
+    borderRadius: radii.xs,
   },
   consistencyDescription: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
+    ...typography.bodySecondary,
+    color: palette.textSecondary,
+    lineHeight: 22,
   },
   // Emotional sleep map styles
   emotionsContainer: {
     flexDirection: 'column',
-    gap: 12,
+    gap: spacing.md,
   },
   emotionItem: {
     flexDirection: 'row',
@@ -677,24 +649,23 @@ const styles = StyleSheet.create({
   emotionColor: {
     width: 20,
     height: 20,
-    borderRadius: 10,
-    marginRight: 12,
+    borderRadius: radii.pill,
+    marginRight: spacing.md,
   },
   emotionLabel: {
     flex: 1,
-    fontSize: 16,
-    color: '#1F2937',
-    fontWeight: '500',
+    ...typography.body,
+    color: palette.textPrimary,
   },
   emotionCount: {
-    fontSize: 16,
+    ...typography.body,
     fontWeight: '700',
-    color: '#7C3AED',
+    color: palette.primary,
   },
   // Pie chart styles
   pieChartContainer: {
     flexDirection: 'column',
-    gap: 16,
+    gap: spacing.lg,
   },
   pieSliceContainer: {
     flexDirection: 'row',
@@ -708,90 +679,85 @@ const styles = StyleSheet.create({
   pieSliceColor: {
     width: 16,
     height: 16,
-    borderRadius: 8,
-    marginRight: 12,
+    borderRadius: radii.pill,
+    marginRight: spacing.md,
   },
   pieSliceLabel: {
-    fontSize: 16,
-    color: '#1F2937',
-    fontWeight: '500',
+    ...typography.body,
+    color: palette.textPrimary,
   },
   pieSliceValue: {
-    fontSize: 16,
+    ...typography.body,
     fontWeight: '700',
-    color: '#7C3AED',
+    color: palette.primary,
   },
   // Sleep duration styles
   sleepStatsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   sleepStatItem: {
     alignItems: 'center',
   },
   sleepStatValue: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#3B82F6',
-    marginBottom: 4,
+    ...typography.heading,
+    color: palette.info,
   },
   sleepStatLabel: {
-    fontSize: 14,
-    color: '#6B7280',
+    ...typography.caption,
+    color: palette.textSecondary,
   },
   sleepChartContainer: {
-    marginTop: 16,
+    marginTop: spacing.lg,
   },
   sleepChartBarContainer: {
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: spacing.lg,
     width: 40,
   },
   sleepChartBar: {
     width: 20,
-    borderRadius: 10,
-    marginBottom: 8,
+    borderRadius: radii.xs,
+    marginBottom: spacing.xs,
   },
   sleepChartLabel: {
-    fontSize: 12,
-    color: '#6B7280',
+    ...typography.caption,
+    color: palette.textSecondary,
   },
   // Lucid dreams styles
   lucidStatsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   lucidStatItem: {
     alignItems: 'center',
   },
   lucidStatValue: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#10B981',
-    marginBottom: 4,
+    ...typography.heading,
+    color: palette.success,
   },
   lucidStatLabel: {
-    fontSize: 14,
-    color: '#6B7280',
+    ...typography.caption,
+    color: palette.textSecondary,
   },
   lucidChartContainer: {
-    marginTop: 16,
+    marginTop: spacing.lg,
   },
   lucidChartBarContainer: {
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: spacing.lg,
     width: 40,
   },
   lucidChartBar: {
     width: 20,
-    borderRadius: 10,
-    marginBottom: 8,
+    borderRadius: radii.xs,
+    marginBottom: spacing.xs,
   },
   lucidChartLabel: {
-    fontSize: 12,
-    color: '#6B7280',
+    ...typography.caption,
+    color: palette.textSecondary,
   },
   // Correlation styles
   correlationContainer: {
@@ -800,46 +766,45 @@ const styles = StyleSheet.create({
   correlationHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   correlationValue: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#1F2937',
-    marginRight: 8,
+    ...typography.heading,
+    color: palette.textPrimary,
+    marginRight: spacing.xs,
   },
   correlationType: {
-    fontSize: 16,
-    color: '#6B7280',
+    ...typography.body,
+    color: palette.textSecondary,
   },
   correlationBarContainer: {
     width: '100%',
     height: 12,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 6,
-    marginBottom: 16,
+    backgroundColor: palette.divider,
+    borderRadius: radii.xs,
+    marginBottom: spacing.lg,
     overflow: 'hidden',
   },
   correlationBar: {
     height: '100%',
-    borderRadius: 6,
+    borderRadius: radii.xs,
   },
   correlationDescription: {
-    fontSize: 14,
-    color: '#6B7280',
+    ...typography.bodySecondary,
+    color: palette.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   // Loading styles
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 50,
+    paddingVertical: spacing.xxxl,
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#6B7280',
+    marginTop: spacing.lg,
+    ...typography.body,
+    color: palette.textSecondary,
   },
 });
